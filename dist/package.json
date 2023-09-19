@@ -1,0 +1,59 @@
+{
+    "name": "sqlite-orm",
+    "version": "0.0.1",
+    "type": "module",
+    "types": "src/types/types.d.ts",
+    "description": "",
+    "main": "lib/bundle.cjs.js",
+    "jsnext:main": "lib/bundle.esm.js",
+    "module": "lib/bundle.esm.js",
+    "browser": "lib/bundle.browser.js",
+    "amd": "lib/bundle.amd.js",
+    "homepage": "",
+    "bugs": {},
+    "keywords": [
+        "sqlite",
+        "orm"
+    ],
+    "author": "An <331536495@qq.com> (https://ann-yang.gitee.io/note-sites/)",
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "files": [
+        "lib",
+        "src"
+    ],
+    "license": "MIT",
+    "scripts": {
+        "build": "rollup -c ./rollup.config.ts",
+        "dev": "node --loader ts-node/esm ./src/index.ts",
+        "dev:nodemon": "nodemon --watch ./dist ./dist/index.js",
+        "lint": "eslint src --ext .ts",
+        "prettier": "prettier --write src",
+        "test": "vitest ./src/test/index.test.ts"
+    },
+    "dependencies": {
+        "@anlib/ts-config": "^1.0.1",
+        "ts-node": "^10.9.1"
+    },
+    "devDependencies": {
+        "@anlib/eslint-config-ts": "^1.0.4",
+        "@babel/core": "^7.19.1",
+        "@babel/preset-env": "^7.19.4",
+        "@rollup/plugin-babel": "^5.3.1",
+        "@rollup/plugin-commonjs": "^22.0.2",
+        "@rollup/plugin-replace": "^4.0.0",
+        "@rollup/plugin-terser": "^0.3.0",
+        "@rollup/plugin-typescript": "^8.5.0",
+        "@types/babel__core": "^7.1.19",
+        "@types/node": "^18.11.18",
+        "eslint": "^8.25.0",
+        "nodemon": "^2.0.20",
+        "prettier": "^2.7.1",
+        "rollup": "^2.79.1",
+        "tslib": "^2.4.0",
+        "typescript": "^4.9.3",
+        "vitest": "^0.26.3"
+    }
+}
