@@ -1,6 +1,6 @@
 import SqliteOrm from "./SqliteOrm";
 
-const sqliteOrm = new SqliteOrm("test.db");
+const sqliteOrm = new SqliteOrm({ tableName: "test.db" });
 
 type Persion = {
   name: string;
@@ -21,7 +21,7 @@ const sql0 = sqliteOrm.buildCreate([
   { field: "name", type: "TEXT", isNotNull: true },
   { field: "age", type: "INTEGER", isNotNull: true },
   { field: "height", type: "FLOAT" },
-  { field: "weight", type: "FLOAT" },
+  { field: "weight", type: "FLOAT" }
 ]);
 console.log("sql0: ", sql0);
 // sql0:  CREATE TABLE IF NOT EXISTS "test.db" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);
@@ -39,6 +39,7 @@ console.log("sql1: ", sql1);
 
 const sql2 = sqliteOrm
   .setTableName("my_table")
+  .fillValue(false) // -> 关闭值填充模式
   .select("name,age")
   .and("name", ">", 18) // -> 等价于 where()
   .groupBy("name")
@@ -97,7 +98,6 @@ const sql9 = sqliteOrm.tableInfo();
 console.log("sql9: ", sql9);
 // sql9:  SELECT * FROM "sqlite_master" WHERE type="table" AND name="my_table"
 
-
 /**
  * 姓名修改为 name-age-gex 格式
  * 年龄增大10倍
@@ -116,7 +116,7 @@ const sql10 = sqliteOrm.buildUpdateByWhen({
       },
       getThenValue(row) {
         return `${row.name}-${row.age}-${row.gex}`;
-      },
+      }
     },
     {
       setField: "age",
@@ -128,7 +128,7 @@ const sql10 = sqliteOrm.buildUpdateByWhen({
       },
       getThenValue(row) {
         return row.age * 10;
-      },
+      }
     }
   ]
 });

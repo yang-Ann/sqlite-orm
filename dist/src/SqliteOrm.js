@@ -2,16 +2,16 @@
  * SQLite ORM
  */
 class SqliteOrm {
-    tableName;
-    curOrmStore = SqliteOrm.getDefaultCurOrmStore();
-    constructor(tableName) {
-        this.tableName = tableName;
+    opt;
+    constructor(opt) {
+        this.opt = opt;
     }
+    curOrmStore = this.getDefaultCurOrmStore();
     /** 获取默认的ORM方法 */
-    static getDefaultCurOrmStore() {
+    getDefaultCurOrmStore() {
         return {
             insert: undefined,
-            delect: undefined,
+            delete: undefined,
             update: undefined,
             select: undefined,
             count: undefined,
@@ -19,28 +19,31 @@ class SqliteOrm {
             where: undefined,
             and: undefined,
             or: undefined,
-            limit: undefined
+            limit: undefined,
+            isFillValue: true,
+            // isFillValue: false,
+            fillValue: []
         };
+    }
+    get tableName() {
+        return this.opt.tableName;
+    }
+    get isFillValue() {
+        return this.curOrmStore.isFillValue;
     }
     /** 获取表名称 */
     getTableName() {
-        return this.tableName;
+        return this.opt.tableName;
     }
     /** 修改表名称 */
     setTableName(tableName) {
-        this.tableName = tableName;
+        this.opt.tableName = tableName;
         return this;
     }
     /** 清除ORM状态 */
     clearCurOrmStore() {
-        this.curOrmStore = SqliteOrm.getDefaultCurOrmStore();
+        this.curOrmStore = this.getDefaultCurOrmStore();
         return this;
-    }
-    /**
-     * 清除状态
-     */
-    clear() {
-        return this.clearCurOrmStore();
     }
     /** 设置操作状态 */
     setOperStore(key, value) {
@@ -48,7 +51,7 @@ class SqliteOrm {
         this.curOrmStore = {
             ...this.curOrmStore,
             select: undefined,
-            delect: undefined,
+            delete: undefined,
             update: undefined,
             count: undefined,
             [key]: value
@@ -64,7 +67,12 @@ class SqliteOrm {
      */
     inser(data) {
         const values = this.buildInsertValues([data]);
-        return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
+        if (Array.isArray(values)) {
+            return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
+        }
+        else {
+            return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
+        }
     }
     /**
      * 批量生成 INSERT 语句
@@ -89,120 +97,158 @@ class SqliteOrm {
         return allData.map(items => {
             // 这里要返回一个数组, 因为一次最多插入 999 个值
             const values = this.buildInsertValues(items);
-            return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
+            // 这里要清空旧的数据, 不然会导致数据不对应
+            this.curOrmStore.fillValue = [];
+            if (Array.isArray(values)) {
+                return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
+            }
+            else {
+                return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
+            }
         });
     }
-    delect() {
-        return this.setOperStore("delect", true);
+    /** DELETE 操作 */
+    delete() {
+        return this.setOperStore("delete", true);
     }
+    /** UPDATE 操作 */
     update(obj) {
         return this.setOperStore("update", obj);
     }
+    /** SELECT 操作 */
     select(field = "*") {
         return this.setOperStore("select", field);
     }
+    /** COUNT 查询 */
     count(field) {
         return this.setOperStore("count", field.startsWith("count(") ? `count(${field})` : field);
     }
+    /** 开启值填充模式 */
+    fillValue(flag = true) {
+        this.curOrmStore.isFillValue = flag;
+        return this;
+    }
+    /** 设置 GROUP BY */
     groupBy(field) {
         this.curOrmStore.groupBy = field;
         return this;
     }
+    /** 设置 ORDER BY */
     orderBy(order, field) {
         this.curOrmStore.orderBy = [order, field];
         return this;
     }
-    // 构建 where 项
-    buildWhereItem(key, connect, value) {
+    // 构建 WHERE 项
+    buildWhereItem(key, connect, value, addDataFlag = "PUSH") {
         const spec = ["IN", "IS NOT", "NOT", "like"];
         const _connect = spec.includes(connect) ? ` ${connect} ` : connect;
-        let _value = "";
+        let _value = value;
         if (value) {
             if (typeof value === "string") {
-                _value = `"${value}"`;
+                if (this.isFillValue) {
+                    _value = "?";
+                    if (addDataFlag == "PUSH") {
+                        this.curOrmStore.fillValue.push(value);
+                    }
+                    else {
+                        this.curOrmStore.fillValue.unshift(value);
+                    }
+                }
+                else {
+                    _value = `"${value}"`;
+                }
             }
             else if (connect === "IN" && Array.isArray(value)) {
                 const v = value
                     .map(e => {
-                    if (typeof e === "string") {
+                    if (this.isFillValue) {
+                        if (addDataFlag == "PUSH") {
+                            this.curOrmStore.fillValue.push(e);
+                        }
+                        else {
+                            this.curOrmStore.fillValue.unshift(e);
+                        }
+                        return "?";
+                    }
+                    else if (typeof e === "string") {
                         return `"${e}"`;
                     }
                     else {
                         return e;
                     }
                 })
-                    .join(",");
+                    .join(", ");
                 _value = `(${v})`;
             }
             else {
-                _value = value;
+                if (this.isFillValue) {
+                    _value = "?";
+                    if (addDataFlag == "PUSH") {
+                        this.curOrmStore.fillValue.push(value);
+                    }
+                    else {
+                        this.curOrmStore.fillValue.unshift(value);
+                    }
+                }
+                else {
+                    _value = value;
+                }
             }
         }
         else {
             // 如果是布尔值, 则 true = 1, false = 0
-            if (typeof value === "boolean") {
-                _value = value ? 1 : 0;
-            }
+            // if (typeof value === "boolean") {
+            //   _value = value ? 1 : 0;
+            // }
         }
         return `${key}${_connect}${_value}`;
     }
     /** 设置 WHERE */
     where(key, connect, value) {
         this.curOrmStore.isSetWhere = true;
-        const str = this.buildWhereItem(key, connect, value);
+        // TODO 这里操作里面的 fillValue 添加要判断是 push 还是 unshift
         if (this.curOrmStore.where) {
+            const str = this.buildWhereItem(key, connect, value, "UNSHIFT");
             this.curOrmStore.where.unshift(str);
         }
         else {
+            const str = this.buildWhereItem(key, connect, value, "PUSH");
             this.curOrmStore.where = [str];
+        }
+        return this;
+    }
+    /** 设置 AND 和 OR */
+    setWhere(key, connect, value, whereType) {
+        const item = { key, connect, value };
+        const field = whereType.toLowerCase();
+        if (!this.curOrmStore[field]) {
+            this.curOrmStore[field] = [item];
+        }
+        else {
+            // @ts-ignore
+            this.curOrmStore[field].push(item);
+        }
+        const str = this.buildWhereItem(key, connect, value, "PUSH");
+        if (this.curOrmStore.where) {
+            if (this.curOrmStore.where[this.curOrmStore.where.length - 1] === "(") {
+                this.curOrmStore.where.push(str);
+            }
+            else {
+                this.curOrmStore.where.push(whereType, str);
+            }
+        }
+        else {
+            this.curOrmStore.where = [whereType, str];
         }
         return this;
     }
     /** 设置 AND */
     and(key, connect, value) {
-        const item = { key, connect, value };
-        if (!this.curOrmStore.and) {
-            this.curOrmStore.and = [item];
-        }
-        else {
-            this.curOrmStore.and.push(item);
-        }
-        const str = this.buildWhereItem(key, connect, value);
-        if (this.curOrmStore.where) {
-            if (this.curOrmStore.where[this.curOrmStore.where.length - 1] === "(") {
-                this.curOrmStore.where.push(str);
-            }
-            else {
-                this.curOrmStore.where.push("AND", str);
-            }
-        }
-        else {
-            this.curOrmStore.where = ["AND", str];
-        }
-        return this;
+        return this.setWhere(key, connect, value, "AND");
     }
     /** 设置 OR */
     or(key, connect, value) {
-        const item = { key, connect, value };
-        if (this.curOrmStore.or) {
-            this.curOrmStore.or.push(item);
-        }
-        else {
-            this.curOrmStore.or = [item];
-        }
-        const str = this.buildWhereItem(key, connect, value);
-        if (this.curOrmStore.where) {
-            if (this.curOrmStore.where[this.curOrmStore.where.length - 1] === "(") {
-                this.curOrmStore.where.push(str);
-            }
-            else {
-                this.curOrmStore.where.push("OR", str);
-            }
-        }
-        else {
-            this.curOrmStore.where = ["OR", str];
-        }
-        return this;
+        return this.setWhere(key, connect, value, "OR");
     }
     // 数组构建
     buildWhereArrayItem(key, connect, value, whereType) {
@@ -277,17 +323,49 @@ class SqliteOrm {
     /** 生成 GROUP BY */
     buildGroupBy() {
         const groupBy = this.curOrmStore.groupBy;
-        return groupBy ? `GROUP BY ${groupBy}` : "";
+        let ret = "";
+        if (groupBy) {
+            if (this.isFillValue) {
+                this.curOrmStore.fillValue.push(groupBy);
+                ret = "GROUP BY ?";
+            }
+            else {
+                ret = `GROUP BY ${groupBy}`;
+            }
+        }
+        return ret;
     }
     /** 生成 ORDER BY */
     buildOrderBy() {
         const orderBy = this.curOrmStore.orderBy;
-        return orderBy && orderBy.length ? `ORDER BY ${orderBy[1]} ${orderBy[0]}` : "";
+        let ret = "";
+        if (orderBy && orderBy.length) {
+            const [field, sort] = orderBy;
+            if (this.isFillValue) {
+                this.curOrmStore.fillValue.push(field, sort);
+                ret = `ORDER BY ? ?`;
+            }
+            else {
+                ret = `ORDER BY ${field} ${sort}`;
+            }
+        }
+        return ret;
     }
     /** 生成 LIMIT */
     buildLimit() {
         const limit = this.curOrmStore.limit;
-        return limit && limit.length ? `LIMIT ${limit[0]},${limit[1]}` : "";
+        let ret = "";
+        if (limit && limit.length) {
+            const [start, offset] = limit;
+            if (this.isFillValue) {
+                this.curOrmStore.fillValue.push(start, offset);
+                ret = `LIMIT ?,?`;
+            }
+            else {
+                ret = `LIMIT ${start},${offset}`;
+            }
+        }
+        return ret;
     }
     /** 生成 INSERT VLAUES */
     buildInsertValues(insertDatas) {
@@ -305,17 +383,14 @@ class SqliteOrm {
                     if (Object.prototype.hasOwnProperty.call(insertData, key)) {
                         if (field === key) {
                             const v = insertData[key];
-                            if (v && typeof v === "string") {
-                                val.push(`"${v}"`);
+                            if (this.isFillValue) {
+                                this.curOrmStore.fillValue.push(v);
+                            }
+                            if (typeof v === "string") {
+                                val.push(this.isFillValue ? "?" : `"${v}"`);
                             }
                             else {
-                                // 如果是布尔值, true = 1, false = 0
-                                if (typeof v === "boolean") {
-                                    val.push(v ? 1 : 0);
-                                }
-                                else {
-                                    val.push(v);
-                                }
+                                val.push(this.isFillValue ? "?" : v);
                             }
                         }
                     }
@@ -329,8 +404,19 @@ class SqliteOrm {
             return `(${v})`;
         })
             .join(", ");
-        return `${fieldSql} ${values}`;
-        // const { sql: _sql, params } = await this.buildInsertSql([insertData]);
+        // DEBUG
+        // console.log("values: ", values);
+        // console.log("fillValue: ", this.curOrmStore.fillValue);
+        if (this.curOrmStore.isFillValue) {
+            const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
+            return [`${fieldSql} ${values}`, fillValue];
+        }
+        else {
+            return `${fieldSql} ${values}`;
+        }
+    }
+    cloneData(data) {
+        return JSON.parse(JSON.stringify(data));
     }
     /** 生成 sql */
     buildRawSql() {
@@ -339,9 +425,8 @@ class SqliteOrm {
             return "";
         }
         let sql = "";
-        let values = [];
         const operMap = {
-            delect: "DELETE FROM",
+            delete: "DELETE FROM",
             update: "UPDATE",
             select: `SELECT ${this.curOrmStore.select} FROM`,
             count: `SELECT count(${this.curOrmStore.count}) FROM`
@@ -352,27 +437,42 @@ class SqliteOrm {
         const orderBySql = this.buildOrderBy();
         const limitSql = this.buildLimit();
         const otherSql = `${whereSql} ${groupBySql} ${orderBySql} ${limitSql}`;
-        if (curOper === "delect") {
+        if (curOper === "delete") {
             sql = `${sql} ${otherSql}`;
         }
         else if (curOper === "update") {
             const updateData = this.curOrmStore.update;
             if (updateData) {
-                // TODO
-                // const { fields, values: _value } = this.getDataInfo(updateData);
                 const fields = Object.keys(updateData);
                 const _value = Object.values(updateData);
-                // const setSql = fields.map(e => `${e}=?`).join(", ");
-                const setSql = fields.map((e, i) => `${e}="${values[i]}"`).join(", ");
+                let setSql;
+                if (this.isFillValue) {
+                    setSql = fields
+                        .map((e, i) => {
+                        this.curOrmStore.fillValue.push(_value[i]);
+                        return `${e}=?`;
+                    })
+                        .join(", ");
+                }
+                else {
+                    setSql = fields.map((e, i) => `${e}="${_value[i]}"`).join(", ");
+                }
                 sql = `${sql} SET ${setSql} ${otherSql}`;
-                values = _value;
             }
         }
         else if (curOper === "select" || curOper === "count") {
             sql = `${sql} ${otherSql}`;
         }
-        this.clearCurOrmStore();
-        return sql.replace(/\s+/g, " ");
+        sql = sql.replace(/\s+/g, " ").trim();
+        if (this.isFillValue) {
+            const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
+            this.clearCurOrmStore();
+            return [sql, fillValue];
+        }
+        else {
+            this.clearCurOrmStore();
+            return sql;
+        }
     }
     /**
      * 新增列
@@ -382,12 +482,14 @@ class SqliteOrm {
      * @returns `string`
      */
     addColumn(field, type, tableName = this.tableName) {
+        this.clearCurOrmStore();
         return `ALTER TABLE "${tableName}" ADD ${field} ${type};`;
     }
     /**
      * 数据切片
      */
     dataSlice(opt) {
+        this.clearCurOrmStore();
         // 一次最大的数据长度
         const ONCE_MAX_LENGTH = opt.onceMaxDataLength;
         // 克隆数据
@@ -417,11 +519,11 @@ class SqliteOrm {
             onceMaxDataLength: opt.onceMaxUpdateDataLength || 999
         });
         for (let i = 0; i < dataSlice.length; i++) {
-            console.log("更新数据: ", dataSlice[i]);
             const itemSql = this.$buildUpdateByWhen({
                 datas: dataSlice[i],
                 onceMaxUpdateDataLength: opt.onceMaxUpdateDataLength,
                 fieldOpts: opt.fieldOpts,
+                isFillValue: this.isFillValue,
                 getExtraUpdateWhen: opt.getExtraUpdateWhen,
                 getExtraWhere: opt.getExtraWhere
             });
@@ -498,6 +600,8 @@ class SqliteOrm {
      */
     $buildUpdateByWhen(opt) {
         const conditions = [];
+        const values = [];
+        const isFillValue = opt.isFillValue;
         opt.fieldOpts.forEach(item => {
             const { setField, getWhenField, getWhenValue, getThenValue } = item;
             const line = opt.datas
@@ -505,7 +609,13 @@ class SqliteOrm {
                 const whenField = getWhenField(e);
                 const whenValue = getWhenValue(e);
                 const thenValue = getThenValue(e);
-                return `WHEN ${whenField}="${whenValue}" THEN "${thenValue}"`;
+                if (isFillValue) {
+                    values.push(whenValue, thenValue);
+                    return `WHEN ${whenField}=? THEN ?`;
+                }
+                else {
+                    return `WHEN ${whenField}="${whenValue}" THEN "${thenValue}"`;
+                }
             })
                 .join(" ");
             const sql = `${setField} = CASE ${line} END`;
@@ -515,40 +625,48 @@ class SqliteOrm {
         const extraUpdateWhen = opt.getExtraUpdateWhen ? ", " + opt.getExtraUpdateWhen(opt.datas) : "";
         const extraWhere = opt.getExtraWhere ? `WHERE ${opt.getExtraWhere(opt.datas)}` : "";
         const sql = `UPDATE "${this.tableName}" ${updateWhen} ${extraUpdateWhen} ${extraWhere}`.trim();
-        return sql;
+        if (isFillValue) {
+            return [sql, values];
+        }
+        else {
+            return sql;
+        }
     }
     /**
      * 设置数据库版本
      */
     setVersion(version) {
+        this.clearCurOrmStore();
         return `PRAGMA user_version = ${version}`;
     }
     /**
      * 获取数据库表信息
      */
     tableInfo(tableName = this.tableName) {
-        const temp = new SqliteOrm("sqlite_master");
+        const temp = new SqliteOrm({ tableName: "sqlite_master" });
         return temp.select().where("type", "=", "table").and("name", "=", tableName).getSqlRaw();
     }
     findById(id, field = "id") {
-        return this.clear().select().where(field, "=", id).getSqlRaw();
+        return this.clearCurOrmStore().select().where(field, "=", id).getSqlRaw();
     }
     selectAll(tableName = this.tableName) {
-        return this.clear().setTableName(tableName).select().getSqlRaw();
+        return this.clearCurOrmStore().setTableName(tableName).select().getSqlRaw();
     }
     deleteById(id, field = "id") {
-        return this.clear().delect().where(field, "=", id).getSqlRaw();
+        return this.clearCurOrmStore().delete().where(field, "=", id).getSqlRaw();
     }
     deleteAll(tableName = this.tableName) {
-        return this.clear().setTableName(tableName).delect().where("1", "=", 1).getSqlRaw();
+        return this.clearCurOrmStore().setTableName(tableName).delete().where("1", "=", 1).getSqlRaw();
     }
     deleteTable(tableName = this.tableName) {
+        this.clearCurOrmStore();
         return `DROP TABLE IF EXISTS "${tableName}"`;
     }
     /**
      * 构建 CREATE TABLE 语句
      */
     buildCreate(option) {
+        this.clearCurOrmStore();
         const list = [];
         option.forEach(e => {
             const { field, type, isKey, isNotNull } = e;

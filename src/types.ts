@@ -17,7 +17,7 @@ export type TableFieldsOption = {
   isNotNull?: boolean;
 };
 
-export type CurOperType = keyof Pick<CurOrmStoreType, "delect" | "update" | "select" | "count">;
+export type CurOperType = keyof Pick<CurOrmStoreType, "delete" | "update" | "select" | "count">;
 
 /** ORM 保存的状态 */
 export type CurOrmStoreType = {
@@ -25,8 +25,8 @@ export type CurOrmStoreType = {
   insert?: string;
   /** 批量 INSERT 相关操作 */
   inserts?: string[];
-  /** DELECT 相关操作 */
-  delect?: boolean;
+  /** DELETE 相关操作 */
+  delete?: boolean;
   /** UPDATE 相关操作 */
   update?: MyObject;
   /** SELECT 相关操作 */
@@ -35,6 +35,10 @@ export type CurOrmStoreType = {
   count?: string;
   /** 当前的操作类型 */
   curOper?: CurOperType;
+  /** 是否值填充模式 */
+  isFillValue: boolean;
+  /** 填充的值 */
+  fillValue: any[];
   /** 保存 GROUP BY */
   groupBy?: string;
   /** 保存 ORDER BY */

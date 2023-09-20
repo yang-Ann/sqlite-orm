@@ -5,6 +5,8 @@ export type BuildUpdateByWhenOption<T = any> = {
     datas: T[];
     /** 一次最大更新多少条数据 */
     onceMaxUpdateDataLength?: number;
+    /** 是否使用值填充模式 */
+    isFillValue: boolean;
     /** 字段数据 */
     fieldOpts: {
         /** SET xxx 里的 xxx 字段 */
@@ -25,21 +27,25 @@ export type BuildUpdateByWhenOption<T = any> = {
  * SQLite ORM
  */
 declare class SqliteOrm {
-    private tableName;
+    opt: {
+        /** 表名称 */
+        tableName: string;
+    };
+    constructor(opt: {
+        /** 表名称 */
+        tableName: string;
+    });
     private curOrmStore;
-    constructor(tableName: string);
     /** 获取默认的ORM方法 */
-    static getDefaultCurOrmStore(): CurOrmStoreType;
+    private getDefaultCurOrmStore;
+    get tableName(): string;
+    get isFillValue(): boolean;
     /** 获取表名称 */
     getTableName(): string;
     /** 修改表名称 */
     setTableName(tableName: string): this;
     /** 清除ORM状态 */
     private clearCurOrmStore;
-    /**
-     * 清除状态
-     */
-    clear(): this;
     /** 设置操作状态 */
     setOperStore<T extends CurOperType>(key: T, value: CurOrmStoreType[T]): this;
     /**
@@ -47,23 +53,33 @@ declare class SqliteOrm {
      * @param data 插入的数据
      * @returns `string`
      */
-    inser<T extends MyObject>(data: T): string;
+    inser<T extends MyObject>(data: T): string | any[];
     /**
      * 批量生成 INSERT 语句
      * @param datas 插入的数据
      * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
      * @returns `string[]`
      */
-    insers<T extends MyObject[]>(datas: T, maxSize?: number): string[] | "";
-    delect(): this;
+    insers<T extends MyObject[]>(datas: T, maxSize?: number): "" | (string | any[])[];
+    /** DELETE 操作 */
+    delete(): this;
+    /** UPDATE 操作 */
     update<T extends MyObject>(obj: T): this;
+    /** SELECT 操作 */
     select(field?: string): this;
+    /** COUNT 查询 */
     count(field: string): this;
+    /** 开启值填充模式 */
+    fillValue(flag?: boolean): this;
+    /** 设置 GROUP BY */
     groupBy(field: string): this;
+    /** 设置 ORDER BY */
     orderBy(order: OrderByType, field: string): this;
     private buildWhereItem;
     /** 设置 WHERE */
     where(key: string, connect: WhereConnectType, value: any): this;
+    /** 设置 AND 和 OR */
+    private setWhere;
     /** 设置 AND */
     and(key: string, connect: WhereConnectType, value: any): this;
     /** 设置 OR */
@@ -78,7 +94,7 @@ declare class SqliteOrm {
     /** 设置 LIMIT */
     limit(limit: number, offset: number): this;
     /** 获取原始sql语句 */
-    getSqlRaw(): string;
+    getSqlRaw(): string | [string, any[]];
     /** 生成 WHERE */
     private buildWhere;
     /** 生成 GROUP BY */
@@ -89,8 +105,9 @@ declare class SqliteOrm {
     private buildLimit;
     /** 生成 INSERT VLAUES */
     private buildInsertValues;
+    cloneData(data: any): any;
     /** 生成 sql */
-    buildRawSql(): string;
+    buildRawSql(): string | [string, any[]];
     /**
      * 新增列
      * @param field 字段名
@@ -111,7 +128,7 @@ declare class SqliteOrm {
     /**
      * 执行 update when 语句(支持大数据量, 内部会做切分执行), 参考`$buildUpdateByWhen`
      */
-    buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>): string[];
+    buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>): (string | (string | any[])[])[];
     /**
      * 执行 update when 语句, 这个方法最多一次只能更新999条数据
      * - 不然会报错 `sqlite3_prepare_v2 failure: Expression tree is too large (maximum depth 1000)`
@@ -187,11 +204,11 @@ declare class SqliteOrm {
     /**
      * 获取数据库表信息
      */
-    tableInfo(tableName?: string): string;
-    findById(id: string | number, field?: string): string;
-    selectAll(tableName?: string): string;
-    deleteById(id: string | number, field?: string): string;
-    deleteAll(tableName?: string): string;
+    tableInfo(tableName?: string): string | [string, any[]];
+    findById(id: string | number, field?: string): string | [string, any[]];
+    selectAll(tableName?: string): string | [string, any[]];
+    deleteById(id: string | number, field?: string): string | [string, any[]];
+    deleteAll(tableName?: string): string | [string, any[]];
     deleteTable(tableName?: string): string;
     /**
      * 构建 CREATE TABLE 语句

@@ -1,11 +1,520 @@
 // Vitest Snapshot v1
 
-exports[`base methods > deleteAll 1`] = `"DELETE FROM \\"my_table\\" WHERE 1=1"`;
+exports[`addColumn > "ALTER TABLE \\"my_table\\" ADD new_name TEXT;" 1`] = `"ALTER TABLE \\"my_table\\" ADD new_name TEXT;"`;
 
-exports[`base methods > deleteById 1`] = `"DELETE FROM \\"my_table\\" WHERE id=1"`;
+exports[`base methods > deleteAll 1`] = `
+[
+  "DELETE FROM \\"my_table\\" WHERE 1=?",
+  [
+    1,
+  ],
+]
+`;
+
+exports[`base methods > deleteById 1`] = `
+[
+  "DELETE FROM \\"my_table\\" WHERE id=?",
+  [
+    1,
+  ],
+]
+`;
 
 exports[`base methods > deleteTable 1`] = `"DROP TABLE IF EXISTS \\"hello.db\\""`;
 
-exports[`base methods > findById 1`] = `"SELECT * FROM \\"my_table\\" WHERE id=1"`;
+exports[`base methods > findById 1`] = `
+[
+  "SELECT * FROM \\"my_table\\" WHERE id=?",
+  [
+    1,
+  ],
+]
+`;
 
-exports[`base methods > selectAll 1`] = `"SELECT * FROM \\"my_table\\""`;
+exports[`base methods > selectAll 1`] = `
+[
+  "SELECT * FROM \\"my_table\\"",
+  [],
+]
+`;
+
+exports[`create sql > "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);" 1`] = `"CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);"`;
+
+exports[`insert > 
+    [
+      "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
+      [
+        "张三",
+        18,
+        "男",
+        true,
+      ],
+    ]
+   1`] = `
+[
+  "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
+  [
+    "张三",
+    18,
+    "男",
+    true,
+  ],
+]
+`;
+
+exports[`insert 1`] = `
+[
+  "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
+  [
+    "张三",
+    18,
+    "男",
+    true,
+  ],
+]
+`;
+
+exports[`inserts > 
+    [
+      [
+        "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+        [
+          "张三",
+          18,
+          "男",
+          "李四",
+          16,
+          "男",
+        ],
+      ],
+      [
+        "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+        [
+          "王五",
+          18,
+          "女",
+          "小明",
+          30,
+          "男",
+        ],
+      ],
+      [
+        "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?)",
+        [
+          "小张",
+          22,
+          "男",
+        ],
+      ],
+    ]
+   1`] = `
+[
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    [
+      "张三",
+      18,
+      "男",
+      "李四",
+      16,
+      "男",
+    ],
+  ],
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    [
+      "王五",
+      18,
+      "女",
+      "小明",
+      30,
+      "男",
+    ],
+  ],
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?)",
+    [
+      "小张",
+      22,
+      "男",
+    ],
+  ],
+]
+`;
+
+exports[`inserts 1`] = `
+[
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    [
+      "张三",
+      18,
+      "男",
+      "李四",
+      16,
+      "男",
+    ],
+  ],
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    [
+      "王五",
+      18,
+      "女",
+      "小明",
+      30,
+      "男",
+    ],
+  ],
+  [
+    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?)",
+    [
+      "小张",
+      22,
+      "男",
+    ],
+  ],
+]
+`;
+
+exports[`select > 
+    [
+      "SELECT * FROM \\"my_table\\" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )",
+      [
+        1,
+        2,
+        "hello",
+        18,
+        1,
+        2,
+        3,
+        1,
+        "2",
+      ],
+    ]
+   1`] = `
+[
+  "SELECT * FROM \\"my_table\\" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )",
+  [
+    1,
+    2,
+    "hello",
+    18,
+    1,
+    2,
+    3,
+    1,
+    "2",
+  ],
+]
+`;
+
+exports[`select > 
+    [
+      "SELECT * FROM \\"my_table\\" WHERE name IN (?, ?, ?) OR age=?",
+      [
+        1,
+        2,
+        "hello",
+        18,
+      ],
+    ]
+   1`] = `
+[
+  "SELECT * FROM \\"my_table\\" WHERE name IN (?, ?, ?) OR age=?",
+  [
+    1,
+    2,
+    "hello",
+    18,
+  ],
+]
+`;
+
+exports[`select > 
+    [
+      "SELECT * FROM \\"test.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
+      [
+        "张三",
+        "18",
+        "张三",
+        "李四",
+        "王五",
+        "男",
+      ],
+    ]
+   1`] = `
+[
+  "SELECT * FROM \\"test.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
+  [
+    "张三",
+    "18",
+    "张三",
+    "李四",
+    "王五",
+    "男",
+  ],
+]
+`;
+
+exports[`select > 
+    [
+      "SELECT count(id) FROM \\"my_table\\" WHERE age>? AND gex=? GROUP BY ?",
+      [
+        18,
+        "男",
+        "name",
+      ],
+    ]
+   1`] = `
+[
+  "SELECT count(id) FROM \\"my_table\\" WHERE age>? AND gex=? GROUP BY ?",
+  [
+    18,
+    "男",
+    "name",
+  ],
+]
+`;
+
+exports[`select > 
+    [
+      "SELECT name,age FROM \\"my_table\\" WHERE name>? GROUP BY ? ORDER BY ? ? LIMIT ?,?",
+      [
+        18,
+        "name",
+        "DESC",
+        "name,age",
+        1,
+        2,
+      ],
+    ]
+   1`] = `
+[
+  "SELECT name,age FROM \\"my_table\\" WHERE name>? GROUP BY ? ORDER BY ? ? LIMIT ?,?",
+  [
+    18,
+    "name",
+    "DESC",
+    "name,age",
+    1,
+    2,
+  ],
+]
+`;
+
+exports[`select 1`] = `
+[
+  "SELECT * FROM \\"test.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
+  [
+    "张三",
+    "18",
+    "张三",
+    "李四",
+    "王五",
+    "男",
+  ],
+]
+`;
+
+exports[`select 2`] = `
+[
+  "SELECT name,age FROM \\"my_table\\" WHERE name>? GROUP BY ? ORDER BY ? ? LIMIT ?,?",
+  [
+    18,
+    "name",
+    "DESC",
+    "name,age",
+    1,
+    2,
+  ],
+]
+`;
+
+exports[`select 3`] = `
+[
+  "SELECT * FROM \\"my_table\\" WHERE name IN (?, ?, ?) OR age=?",
+  [
+    1,
+    2,
+    "hello",
+    18,
+  ],
+]
+`;
+
+exports[`select 4`] = `
+[
+  "SELECT * FROM \\"my_table\\" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )",
+  [
+    1,
+    2,
+    "hello",
+    18,
+    1,
+    2,
+    3,
+    1,
+    "2",
+  ],
+]
+`;
+
+exports[`select 5`] = `
+[
+  "SELECT count(id) FROM \\"my_table\\" WHERE age>? AND gex=? GROUP BY ?",
+  [
+    18,
+    "男",
+    "name",
+  ],
+]
+`;
+
+exports[`setVersion > "PRAGMA user_version = 2" 1`] = `"PRAGMA user_version = 2"`;
+
+exports[`tableInfo > 
+    [
+      "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",
+      [
+        "table",
+        "my_table",
+      ],
+    ]
+   1`] = `
+[
+  "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",
+  [
+    "table",
+    "my_table",
+  ],
+]
+`;
+
+exports[`tableInfo 1`] = `
+[
+  "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",
+  [
+    "table",
+    "my_table",
+  ],
+]
+`;
+
+exports[`updateByWhen > 
+    [
+      [
+        "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+        [
+          "张三",
+          "张三-18-男",
+          "李四",
+          "李四-16-男",
+          18,
+          180,
+          16,
+          160,
+        ],
+      ],
+      [
+        "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+        [
+          "王五",
+          "王五-18-女",
+          "小明",
+          "小明-30-男",
+          18,
+          180,
+          30,
+          300,
+        ],
+      ],
+      [
+        "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END",
+        [
+          "小张",
+          "小张-22-男",
+          22,
+          220,
+        ],
+      ],
+    ]
+   1`] = `
+[
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    [
+      "张三",
+      "张三-18-男",
+      "李四",
+      "李四-16-男",
+      18,
+      180,
+      16,
+      160,
+    ],
+  ],
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    [
+      "王五",
+      "王五-18-女",
+      "小明",
+      "小明-30-男",
+      18,
+      180,
+      30,
+      300,
+    ],
+  ],
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END",
+    [
+      "小张",
+      "小张-22-男",
+      22,
+      220,
+    ],
+  ],
+]
+`;
+
+exports[`updateByWhen 1`] = `
+[
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    [
+      "张三",
+      "张三-18-男",
+      "李四",
+      "李四-16-男",
+      18,
+      180,
+      16,
+      160,
+    ],
+  ],
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    [
+      "王五",
+      "王五-18-女",
+      "小明",
+      "小明-30-男",
+      18,
+      180,
+      30,
+      300,
+    ],
+  ],
+  [
+    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END",
+    [
+      "小张",
+      "小张-22-男",
+      22,
+      220,
+    ],
+  ],
+]
+`;

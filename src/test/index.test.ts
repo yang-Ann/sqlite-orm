@@ -2,7 +2,7 @@ import SqliteOrm from "../SqliteOrm.js";
 // vitest: https://cn.vitest.dev/guide/
 import { test, expect, describe } from "vitest";
 
-const sqliteOrm = new SqliteOrm("test.db");
+const sqliteOrm = new SqliteOrm({ tableName: "test.db" });
 
 type Persion = {
   name: string;
@@ -27,7 +27,7 @@ test("create sql", () => {
     { field: "weight", type: "FLOAT" },
   ]);
 
-  expect(sql0).toMatchInlineSnapshot('"CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);"');
+  expect(sql0).toMatchSnapshot('"CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);"');
 });
 
 test("select", () => {
@@ -39,7 +39,7 @@ test("select", () => {
     .or("gex", "IS NOT", "男")
     .getSqlRaw();
 
-  expect(sql1).toMatchInlineSnapshot('"SELECT * FROM \\"test.db\\" WHERE name=\\"张三\\" AND age!=\\"18\\" OR name IN (\\"张三\\",\\"李四\\",\\"王五\\") OR gex IS NOT \\"男\\""');
+  expect(sql1).toMatchSnapshot();
 
   const sql2 = sqliteOrm
     .setTableName("my_table")
@@ -48,13 +48,14 @@ test("select", () => {
     .groupBy("name")
     .orderBy("DESC", "name,age")
     .limit(1, 2)
+    .fillValue(false) // -> 关闭值填充模式
     .getSqlRaw();
 
-  expect(sql2).toMatchInlineSnapshot('"SELECT name,age FROM \\"my_table\\" WHERE name>18 GROUP BY name ORDER BY name,age DESC LIMIT 1,2"');
+  expect(sql2).toMatchSnapshot();
 
 
   const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
-  expect(sql3).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE name IN (1,2,\\"hello\\") OR age=18"');
+  expect(sql3).toMatchSnapshot();
 
 
   const sql4 = sqliteOrm
@@ -65,11 +66,11 @@ test("select", () => {
   .andArray("gex", "!=", [1, "2", false])
   .getSqlRaw();
 
-  expect(sql4).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE ( name=1 AND name=2 AND name=\\"hello\\" ) OR age=18 AND gex IN (1,2,3) AND ( gex!=1 AND gex!=\\"2\\" AND gex!=0 )"');
+  expect(sql4).toMatchSnapshot();
 
 
   const sql5 = sqliteOrm.count("id").where("age", ">", 18).and("gex", "=", "男").groupBy("name").getSqlRaw();
-  expect(sql5).toMatchInlineSnapshot('"SELECT count(id) FROM \\"my_table\\" WHERE age>18 AND gex=\\"男\\" GROUP BY name"');
+  expect(sql5).toMatchSnapshot();
 });
 
 
@@ -80,29 +81,23 @@ test("insert", () => {
     gex: "男",
     isFlag: true // -> true = 1, false = 0
   });
-  expect(sql6).toMatchInlineSnapshot('"INSERT or REPLACE INTO \\"my_table\\" (name, age, gex, isFlag) VALUES (\\"张三\\", 18, \\"男\\", 1)"');
+  expect(sql6).toMatchSnapshot();
 });
 
 
 test("inserts", () => {
   const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量
-  expect(sql7).toMatchInlineSnapshot(`
-    [
-      "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (\\"张三\\", 18, \\"男\\"), (\\"李四\\", 16, \\"男\\")",
-      "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (\\"王五\\", 18, \\"女\\"), (\\"小明\\", 30, \\"男\\")",
-      "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (\\"小张\\", 22, \\"男\\")",
-    ]
-  `);
+  expect(sql7).toMatchSnapshot();
 });
 
 test("addColumn", () => {
   const sql8 = sqliteOrm.addColumn("new_name", "TEXT");
-  expect(sql8).toMatchInlineSnapshot('"ALTER TABLE \\"my_table\\" ADD new_name TEXT;"');
+  expect(sql8).toMatchSnapshot('"ALTER TABLE \\"my_table\\" ADD new_name TEXT;"');
 });
 
 test("tableInfo", () => {
   const sql9 = sqliteOrm.tableInfo();
-  expect(sql9).toMatchInlineSnapshot('"SELECT * FROM \\"sqlite_master\\" WHERE type=\\"table\\" AND name=\\"my_table\\""');
+  expect(sql9).toMatchSnapshot();
 });
 
 test("updateByWhen", () => {
@@ -140,19 +135,13 @@ test("updateByWhen", () => {
       }
     ]
   });
-  expect(sql10).toMatchInlineSnapshot(`
-    [
-      "UPDATE \\"my_table\\" SET name = CASE WHEN name=\\"张三\\" THEN \\"张三-18-男\\" WHEN name=\\"李四\\" THEN \\"李四-16-男\\" END, age = CASE WHEN age=\\"18\\" THEN \\"180\\" WHEN age=\\"16\\" THEN \\"160\\" END",
-      "UPDATE \\"my_table\\" SET name = CASE WHEN name=\\"王五\\" THEN \\"王五-18-女\\" WHEN name=\\"小明\\" THEN \\"小明-30-男\\" END, age = CASE WHEN age=\\"18\\" THEN \\"180\\" WHEN age=\\"30\\" THEN \\"300\\" END",
-      "UPDATE \\"my_table\\" SET name = CASE WHEN name=\\"小张\\" THEN \\"小张-22-男\\" END, age = CASE WHEN age=\\"22\\" THEN \\"220\\" END",
-    ]
-  `);
+  expect(sql10).toMatchSnapshot();
 });
 
 
 test("setVersion", () => {
   const sql12 = sqliteOrm.setVersion(2);
-  expect(sql12).toMatchInlineSnapshot('"PRAGMA user_version = 2"');
+  expect(sql12).toMatchSnapshot('"PRAGMA user_version = 2"');
 });
 
 describe("base methods", () => {

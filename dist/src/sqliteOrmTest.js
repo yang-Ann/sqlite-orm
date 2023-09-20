@@ -1,5 +1,5 @@
 import SqliteOrm from "./SqliteOrm";
-const sqliteOrm = new SqliteOrm("test.db");
+const sqliteOrm = new SqliteOrm({ tableName: "test.db" });
 const datas = [
     { name: "张三", age: 18, gex: "男" },
     { name: "李四", age: 16, gex: "男" },
@@ -12,7 +12,7 @@ const sql0 = sqliteOrm.buildCreate([
     { field: "name", type: "TEXT", isNotNull: true },
     { field: "age", type: "INTEGER", isNotNull: true },
     { field: "height", type: "FLOAT" },
-    { field: "weight", type: "FLOAT" },
+    { field: "weight", type: "FLOAT" }
 ]);
 console.log("sql0: ", sql0);
 // sql0:  CREATE TABLE IF NOT EXISTS "test.db" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);
@@ -78,6 +78,7 @@ console.log("sql9: ", sql9);
 const sql10 = sqliteOrm.buildUpdateByWhen({
     datas,
     onceMaxUpdateDataLength: 2,
+    isFillValue: true,
     fieldOpts: [
         {
             setField: "name",
@@ -89,7 +90,7 @@ const sql10 = sqliteOrm.buildUpdateByWhen({
             },
             getThenValue(row) {
                 return `${row.name}-${row.age}-${row.gex}`;
-            },
+            }
         },
         {
             setField: "age",
@@ -101,7 +102,7 @@ const sql10 = sqliteOrm.buildUpdateByWhen({
             },
             getThenValue(row) {
                 return row.age * 10;
-            },
+            }
         }
     ]
 });

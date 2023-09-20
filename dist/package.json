@@ -2,7 +2,7 @@
     "name": "sqlite-orm",
     "version": "0.0.1",
     "type": "module",
-    "types": "src/types/types.d.ts",
+    "types": "lib/index.d.ts",
     "description": "",
     "main": "lib/bundle.cjs.js",
     "jsnext:main": "lib/bundle.esm.js",
