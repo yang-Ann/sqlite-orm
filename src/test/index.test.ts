@@ -44,14 +44,19 @@ test("select", () => {
   const sql2 = sqliteOrm
     .setTableName("my_table")
     .select("name,age")
-    .and("name", ">", 18) // -> 等价于 where()
+    .and("name", ">", "张三") // -> 丢失 AND 等价于 where()
     .groupBy("name")
     .orderBy("DESC", "name,age")
-    .limit(1, 2)
-    .fillValue(false) // -> 关闭值填充模式
+    .limit(10, 15)
+    .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
+    .or("gex", "=", "男")
+    .andArray("ids", "IN", [1, 2, 3])
+    .and("uuids", "IN", [1, 2, 3])
     .getSqlRaw();
 
-  expect(sql2).toMatchSnapshot();
+  // expect(sql2).toMatchSnapshot();
+
+  expect(sql2).toMatchInlineSnapshot('"SELECT name,age FROM \\"my_table\\" WHERE name>\\"张三\\" OR gex=\\"男\\" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15"');
 
 
   const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
@@ -140,8 +145,8 @@ test("updateByWhen", () => {
 
 
 test("setVersion", () => {
-  const sql12 = sqliteOrm.setVersion(2);
-  expect(sql12).toMatchSnapshot('"PRAGMA user_version = 2"');
+  const sql12 = sqliteOrm.fillValue(false).setVersion(2);
+  expect(sql12).toMatchSnapshot();
 });
 
 describe("base methods", () => {

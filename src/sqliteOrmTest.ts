@@ -35,25 +35,34 @@ const sql1 = sqliteOrm
   .getSqlRaw();
 
 console.log("sql1: ", sql1);
-// sql1:  SELECT * FROM "test.db" WHERE name="张三" AND age!="18" OR name IN 张三,李四,王五 OR gex IS NOT "男"
+// sql1:  [
+//   'SELECT * FROM "test.db" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?',
+//   [ '张三', '18', '张三', '李四', '王五', '男' ]
+// ]
 
 const sql2 = sqliteOrm
   .setTableName("my_table")
-  .fillValue(false) // -> 关闭值填充模式
   .select("name,age")
-  .and("name", ">", 18) // -> 等价于 where()
+  .and("name", ">", "张三") // -> 丢失 AND 等价于 where()
   .groupBy("name")
   .orderBy("DESC", "name,age")
-  .limit(1, 2)
+  .limit(10, 15)
+  .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
+  .or("gex", "=", "男")
+  .andArray("ids", "IN", [1, 2, 3])
+  .and("uuids", "IN", [1, 2, 3])
   .getSqlRaw();
 
 console.log("sql2: ", sql2);
-// sql2:  SELECT name,age FROM "my_table" WHERE name>18 GROUP BY name ORDER BY name,age DESC LIMIT 1,2
+// sql2:  SELECT name,age FROM "my_table" WHERE name>"张三" OR gex="男" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15
 
 const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
 
 console.log("sql3: ", sql3);
-// sql3:  SELECT * FROM "my_table" WHERE name IN (1,2,"hello") OR age=18
+// sql3:  [
+//   'SELECT * FROM "my_table" WHERE name IN (?, ?, ?) OR age=?',
+//   [ 1, 2, 'hello', 18 ]
+// ]
 
 const sql4 = sqliteOrm
   .select()
@@ -64,12 +73,18 @@ const sql4 = sqliteOrm
   .getSqlRaw();
 
 console.log("sql4: ", sql4);
-// SELECT * FROM "my_table" WHERE ( name=1 AND name=2 AND name="hello" ) OR age=18 AND gex IN (1,2,3) AND ( gex!=1 AND gex!="2" AND gex!=0 )
+// sql4:  [
+//   'SELECT * FROM "my_table" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )',
+//   [ 1, 2, 'hello', 18, 1, 2, 3, 1, '2' ]
+// ]
 
 const sql5 = sqliteOrm.count("id").where("age", ">", 18).and("gex", "=", "男").groupBy("name").getSqlRaw();
 
 console.log("sql5: ", sql5);
-// SELECT * FROM "my_table" WHERE ( name=1 AND name=2 AND name="hello" ) OR age=18 AND gex IN (1,2,3) AND ( gex!=1 AND gex!="2" AND gex!=0 )
+// sql5:  [
+//   'SELECT count(id) FROM "my_table" WHERE age>? AND gex=? GROUP BY ?',
+//   [ 18, '男', 'name' ]
+// ]
 
 const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean }>({
   name: "张三",
@@ -79,24 +94,39 @@ const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean }>({
 });
 
 console.log("sql6: ", sql6);
-// sql6:  INSERT or REPLACE INTO "test.db" (name, age, gex, isFlag) VALUES ("张三", 18, "男", 1)
+// sql6:  [
+//   'INSERT or REPLACE INTO "my_table" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)',
+//   [ '张三', 18, '男', true ]
+// ]
 
 const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量
 
 console.log("sql7: ", sql7);
 // sql7:  [
-//   'INSERT or REPLACE INTO "test.db"  (name, age, gex) VALUES  ("张三", 18, "男"), ("李四", 16, "男")',
-//   'INSERT or REPLACE INTO "test.db"  (name, age, gex) VALUES  ("王五", 18, "女"), ("小明", 30, "男")',
-//   'INSERT or REPLACE INTO "test.db"  (name, age, gex) VALUES  ("小张", 22, "男")'
+//   [
+//     'INSERT or REPLACE INTO "my_table" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)',
+//     [ '张三', 18, '男', '李四', 16, '男' ]
+//   ],
+//   [
+//     'INSERT or REPLACE INTO "my_table" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)',
+//     [ '王五', 18, '女', '小明', 30, '男' ]
+//   ],
+//   [
+//     'INSERT or REPLACE INTO "my_table" (name, age, gex) VALUES (?, ?, ?)',
+//     [ '小张', 22, '男' ]
+//   ]
 // ]
 
 const sql8 = sqliteOrm.addColumn("new_name", "TEXT");
 console.log("sql8: ", sql8);
-// sql8:  SELECT * FROM "sqlite_master" WHERE type="table" AND name="my_table"
+// sql8:  ALTER TABLE "my_table" ADD new_name TEXT;
 
 const sql9 = sqliteOrm.tableInfo();
 console.log("sql9: ", sql9);
-// sql9:  SELECT * FROM "sqlite_master" WHERE type="table" AND name="my_table"
+// sql9:  [
+//   'SELECT * FROM "sqlite_master" WHERE type=? AND name=?',
+//   [ 'table', 'my_table' ]
+// ]
 
 /**
  * 姓名修改为 name-age-gex 格式
@@ -134,30 +164,39 @@ const sql10 = sqliteOrm.buildUpdateByWhen({
 });
 console.log("sql10: ", sql10);
 // sql10:  [
-//   'UPDATE "my_table" SET name = CASE WHEN name="张三" THEN "张三-18-男" WHEN name="李四" THEN "李四-16-男" END, age = CASE WHEN age="18" THEN "180" WHEN age="16" THEN "160" END  ',
-//   'UPDATE "my_table" SET name = CASE WHEN name="王五" THEN "王五-18-女" WHEN name="小明" THEN "小明-30-男" END, age = CASE WHEN age="18" THEN "180" WHEN age="30" THEN "300" END  ',
-//   'UPDATE "my_table" SET name = CASE WHEN name="小张" THEN "小张-22-男" END, age = CASE WHEN age="22" THEN "220" END  '
+//   [
+//     'UPDATE "my_table" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END',
+//     [ '张三', '张三-18-男', '李四', '李四-16-男', 18, 180, 16, 160 ]
+//   ],
+//   [
+//     'UPDATE "my_table" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END',
+//     [ '王五', '王五-18-女', '小明', '小明-30-男', 18, 180, 30, 300 ]
+//   ],
+//   [
+//     'UPDATE "my_table" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END',
+//     [ '小张', '小张-22-男', 22, 220 ]
+//   ]
 // ]
 
 const sql12 = sqliteOrm.setVersion(2);
 console.log("sql12: ", sql12);
-// sql12:  PRAGMA user_version = 2
+// sql12:  [ 'PRAGMA user_version = ?', 2 ]
 
 const sql13 = sqliteOrm.findById(1);
 console.log("sql13: ", sql13);
-// sql13:  SELECT * FROM "my_table" WHERE id=1
+// sql13:  [ 'SELECT * FROM "my_table" WHERE id=?', [ 1 ] ]
 
 const sql14 = sqliteOrm.selectAll();
 console.log("sql14: ", sql14);
-// sql14:  SELECT * FROM "my_table"
+// sql14:  [ 'SELECT * FROM "my_table"', [] ]
 
 const sql15 = sqliteOrm.deleteById(1);
 console.log("sql15: ", sql15);
-// sql15:  DELETE FROM "my_table" WHERE id=1
+// sql15:  [ 'DELETE FROM "my_table" WHERE id=?', [ 1 ] ]
 
 const sql16 = sqliteOrm.deleteAll("hello.db");
 console.log("sql16: ", sql16);
-// sql16:  DELETE FROM "hello.db" WHERE 1=1
+// sql16:  [ 'DELETE FROM "hello.db" WHERE 1=?', [ 1 ] ]
 
 const sql17 = sqliteOrm.deleteTable("hello.db");
 console.log("sql17: ", sql17);

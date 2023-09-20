@@ -7,38 +7,9 @@ import type {
   WhereItem,
   WhereType,
   DataType,
-  TableFieldsOption
+  TableFieldsOption,
+  BuildUpdateByWhenOption
 } from "types";
-
-/** 构建 update when 配置 */
-export type BuildUpdateByWhenOption<T = any> = {
-  /** 操作的数据 */
-  datas: T[];
-
-  /** 一次最大更新多少条数据 */
-  onceMaxUpdateDataLength?: number;
-
-  /** 字段数据 */
-  fieldOpts: {
-    /** SET xxx 里的 xxx 字段 */
-    setField: string;
-
-    /** WHEN xxx=yyy 里的 xxx 数据 */
-    getWhenField: (row: T) => string | number;
-
-    /** WHEN xxx=yyy 里的 yyy 数据 */
-    getWhenValue: (row: T) => string | number;
-
-    /** THEN xxx=yyy 里的 yyy 数据 */
-    getThenValue: (row: T) => string | number;
-  }[];
-
-  /** 额外的 updateWhen 子句 */
-  getExtraUpdateWhen?: (updates: T[]) => string;
-
-  /** 额外的 where 子句 */
-  getExtraWhere?: (updates: T[]) => string;
-};
 
 /**
  * SQLite ORM
@@ -64,8 +35,6 @@ class SqliteOrm {
 
       groupBy: undefined,
       where: undefined,
-      and: undefined,
-      or: undefined,
       limit: undefined,
       isFillValue: true,
       // isFillValue: false,
@@ -121,6 +90,7 @@ class SqliteOrm {
    */
   inser<T extends MyObject>(data: T) {
     const values = this.buildInsertValues([data]);
+    this.clearCurOrmStore();
     if (Array.isArray(values)) {
       return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
     } else {
@@ -155,8 +125,7 @@ class SqliteOrm {
     return allData.map(items => {
       // 这里要返回一个数组, 因为一次最多插入 999 个值
       const values = this.buildInsertValues(items);
-      // 这里要清空旧的数据, 不然会导致数据不对应
-      this.curOrmStore.fillValue = [];
+      this.clearCurOrmStore();
       if (Array.isArray(values)) {
         return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
       } else {
@@ -263,39 +232,48 @@ class SqliteOrm {
 
   /** 设置 WHERE */
   where(key: string, connect: WhereConnectType, value: any) {
+    const item: WhereItem = {
+      key,
+      connect,
+      value,
+      type: "WHERE"
+    };
+
     this.curOrmStore.isSetWhere = true;
-    // TODO 这里操作里面的 fillValue 添加要判断是 push 还是 unshift
     if (this.curOrmStore.where) {
-      const str = this.buildWhereItem(key, connect, value, "UNSHIFT");
-      this.curOrmStore.where.unshift(str);
+      this.curOrmStore.where.unshift(item);
     } else {
-      const str = this.buildWhereItem(key, connect, value, "PUSH");
-      this.curOrmStore.where = [str];
+      this.curOrmStore.where = [item];
     }
     return this;
   }
 
   /** 设置 AND 和 OR */
   private setWhere(key: string, connect: WhereConnectType, value: any, whereType: WhereType) {
-    const item: WhereItem = { key, connect, value };
-    const field = whereType.toLowerCase() as Lowercase<WhereType>;
+    const item: WhereItem = {
+      key,
+      connect,
+      value,
+      type: "WHERE"
+    };
 
-    if (!this.curOrmStore[field]) {
-      this.curOrmStore[field] = [item];
-    } else {
-      // @ts-ignore
-      this.curOrmStore[field].push(item);
-    }
+    const connectItem: WhereItem = {
+      key: "",
+      connect: "",
+      value: whereType,
+      type: "CONNECT"
+    };
 
-    const str = this.buildWhereItem(key, connect, value, "PUSH");
     if (this.curOrmStore.where) {
-      if (this.curOrmStore.where[this.curOrmStore.where.length - 1] === "(") {
-        this.curOrmStore.where.push(str);
+      const lastItem = this.curOrmStore.where[this.curOrmStore.where.length - 1];
+      if (lastItem.value === "(") {
+        this.curOrmStore.where.push(item);
       } else {
-        this.curOrmStore.where.push(whereType, str);
+        this.curOrmStore.where.push(connectItem, item);
       }
     } else {
-      this.curOrmStore.where = [whereType, str];
+      // 手动调用一次
+      this.where(key, connect, value);
     }
     return this;
   }
@@ -310,6 +288,15 @@ class SqliteOrm {
     return this.setWhere(key, connect, value, "OR");
   }
 
+  private getConnectItem(value = ""): WhereItem {
+    return {
+      key: "",
+      connect: "",
+      value,
+      type: "CONNECT"
+    };
+  }
+
   // 数组构建
   private buildWhereArrayItem(key: string, connect: WhereConnectType, value: any[], whereType: WhereType) {
     if (value.length) {
@@ -317,9 +304,9 @@ class SqliteOrm {
     }
 
     if (this.curOrmStore.where) {
-      this.curOrmStore.where.push(whereType, "(");
+      this.curOrmStore.where.push(this.getConnectItem(whereType), this.getConnectItem("("));
     } else {
-      this.curOrmStore.where = ["("];
+      this.curOrmStore.where = [this.getConnectItem("(")];
     }
 
     value.forEach(e => {
@@ -330,8 +317,7 @@ class SqliteOrm {
       }
     });
 
-    this.curOrmStore.where.push(")");
-
+    this.curOrmStore.where.push(this.getConnectItem(")"));
     return this;
   }
 
@@ -384,7 +370,32 @@ class SqliteOrm {
     if (where && !this.curOrmStore.isSetWhere) {
       where.shift();
     }
-    return where && where.length ? `WHERE ${where.join(" ")}` : "";
+
+    let ret = "";
+
+    if (where && where.length) {
+      const whereSql = where
+        .map(e => {
+          if (e.type === "WHERE") {
+            if (e.connect) {
+              return this.buildWhereItem(e.key, e.connect, e.value);
+            } else {
+              console.warn("连接符异常: ", e);
+            }
+            // 普通的连接符
+          } else if (e.type === "CONNECT") {
+            return e.value;
+          } else {
+            console.warn("未知的操作类型: ", e);
+            return "";
+          }
+        })
+        .join(" ");
+
+      ret = `WHERE ${whereSql}`;
+    }
+
+    return ret;
   }
 
   /** 生成 GROUP BY */
@@ -737,8 +748,14 @@ class SqliteOrm {
    * 设置数据库版本
    */
   setVersion(version: number) {
+    let ret;
+    if (this.isFillValue) {
+      ret = [`PRAGMA user_version = ?`, version];
+    } else {
+      ret = `PRAGMA user_version = ${version}`;
+    }
     this.clearCurOrmStore();
-    return `PRAGMA user_version = ${version}`;
+    return ret;
   }
 
   /**
