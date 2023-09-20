@@ -39,7 +39,7 @@ test("select", () => {
     .or("gex", "IS NOT", "男")
     .getSqlRaw();
 
-  expect(sql1).toMatchInlineSnapshot('"SELECT * FROM \\"test.db\\" WHERE name=\\"张三\\" AND age!=\\"18\\" OR name IN (\\"张三\\",\\"李四\\",\\"王五\\") OR gex IS NOT \\"男\\" "');
+  expect(sql1).toMatchInlineSnapshot('"SELECT * FROM \\"test.db\\" WHERE name=\\"张三\\" AND age!=\\"18\\" OR name IN (\\"张三\\",\\"李四\\",\\"王五\\") OR gex IS NOT \\"男\\""');
 
   const sql2 = sqliteOrm
     .setTableName("my_table")
@@ -54,7 +54,7 @@ test("select", () => {
 
 
   const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
-  expect(sql3).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE name IN (1,2,\\"hello\\") OR age=18 "');
+  expect(sql3).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE name IN (1,2,\\"hello\\") OR age=18"');
 
 
   const sql4 = sqliteOrm
@@ -65,11 +65,11 @@ test("select", () => {
   .andArray("gex", "!=", [1, "2", false])
   .getSqlRaw();
 
-  expect(sql4).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE ( name=1 AND name=2 AND name=\\"hello\\" ) OR age=18 AND gex IN (1,2,3) AND ( gex!=1 AND gex!=\\"2\\" AND gex!=0 ) "');
+  expect(sql4).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" WHERE ( name=1 AND name=2 AND name=\\"hello\\" ) OR age=18 AND gex IN (1,2,3) AND ( gex!=1 AND gex!=\\"2\\" AND gex!=0 )"');
 
 
   const sql5 = sqliteOrm.count("id").where("age", ">", 18).and("gex", "=", "男").groupBy("name").getSqlRaw();
-  expect(sql5).toMatchInlineSnapshot('"SELECT count(id) FROM \\"my_table\\" WHERE age>18 AND gex=\\"男\\" GROUP BY name "');
+  expect(sql5).toMatchInlineSnapshot('"SELECT count(id) FROM \\"my_table\\" WHERE age>18 AND gex=\\"男\\" GROUP BY name"');
 });
 
 
@@ -102,7 +102,7 @@ test("addColumn", () => {
 
 test("tableInfo", () => {
   const sql9 = sqliteOrm.tableInfo();
-  expect(sql9).toMatchInlineSnapshot('"SELECT * FROM \\"sqlite_master\\" WHERE type=\\"table\\" AND name=\\"my_table\\" "');
+  expect(sql9).toMatchInlineSnapshot('"SELECT * FROM \\"sqlite_master\\" WHERE type=\\"table\\" AND name=\\"my_table\\""');
 });
 
 test("updateByWhen", () => {
@@ -155,37 +155,31 @@ test("setVersion", () => {
   expect(sql12).toMatchInlineSnapshot('"PRAGMA user_version = 2"');
 });
 
-test("setVersion", () => {
-  const sql12 = sqliteOrm.setVersion(2);
-  expect(sql12).toMatchInlineSnapshot('"PRAGMA user_version = 2"');
-});
-
-
 describe("base methods", () => {
 
   test("findById", () => {
     const sql13 = sqliteOrm.findById(1);
-    expect(sql13).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" "');
+    expect(sql13).toMatchSnapshot();
   });
 
   test("selectAll", () => {
     const sql14 = sqliteOrm.selectAll();
-    expect(sql14).toMatchInlineSnapshot('"DELETE FROM \\"my_table\\" WHERE id=1 "');
+    expect(sql14).toMatchSnapshot();
   });
 
   test("deleteById", () => {
     const sql15 = sqliteOrm.deleteById(1);
-    expect(sql15).toMatchInlineSnapshot('"SELECT * FROM \\"my_table\\" "');
+    expect(sql15).toMatchSnapshot();
   });
 
-  test("selectAll", () => {
-    const sql16 = sqliteOrm.selectAll();
-    expect(sql16).toMatchInlineSnapshot('"DROP TABLE IF EXISTS \\"hello.db\\""');
+  test("deleteAll", () => {
+    const sql16 = sqliteOrm.deleteAll();
+    expect(sql16).toMatchSnapshot();
   });
 
   test("deleteTable", () => {
     const sql17 = sqliteOrm.deleteTable("hello.db");
-    expect(sql17).toMatchInlineSnapshot();
+    expect(sql17).toMatchSnapshot();
   });
   
 });

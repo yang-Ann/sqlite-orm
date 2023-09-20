@@ -110,6 +110,7 @@ class SqliteOrm {
    * @returns `string`
    */
   inser<T extends MyObject>(data: T) {
+    this.clear();
     const values = this.buildInsertValues([data]);
     return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
   }
@@ -121,6 +122,7 @@ class SqliteOrm {
    * @returns `string[]`
    */
   insers<T extends MyObject[]>(datas: T, maxSize = 999) {
+    this.clear();
     // 一次最多可以保存多少个字段的数据
     // const MAX_SIZE = 999;
     if (datas.length === 0) {
@@ -445,7 +447,7 @@ class SqliteOrm {
     }
 
     this.clearCurOrmStore();
-    return sql.replace(/\s+/g, " ");
+    return sql.replace(/\s+/g, " ").trim();
   }
 
   /**
@@ -456,6 +458,7 @@ class SqliteOrm {
    * @returns `string`
    */
   addColumn(field: string, type: DataType, tableName = this.tableName) {
+    this.clear();
     return `ALTER TABLE "${tableName}" ADD ${field} ${type};`;
   }
 
@@ -468,6 +471,7 @@ class SqliteOrm {
     /** 一份的最大长度 */
     onceMaxDataLength: number;
   }) {
+    this.clear();
     // 一次最大的数据长度
     const ONCE_MAX_LENGTH = opt.onceMaxDataLength;
     // 克隆数据
@@ -491,6 +495,7 @@ class SqliteOrm {
    * 执行 update when 语句(支持大数据量, 内部会做切分执行), 参考`$buildUpdateByWhen`
    */
   buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>) {
+    this.clear();
     if (opt.datas.length === 0) {
       console.warn("数组数据为空");
       return [];
@@ -505,7 +510,6 @@ class SqliteOrm {
     });
 
     for (let i = 0; i < dataSlice.length; i++) {
-      console.log("更新数据: ", dataSlice[i]);
       const itemSql = this.$buildUpdateByWhen({
         datas: dataSlice[i],
         onceMaxUpdateDataLength: opt.onceMaxUpdateDataLength,
@@ -618,6 +622,7 @@ class SqliteOrm {
    * 设置数据库版本
    */
   setVersion(version: number) {
+    this.clear();
     return `PRAGMA user_version = ${version}`;
   }
 
@@ -646,6 +651,7 @@ class SqliteOrm {
   }
 
   deleteTable(tableName = this.tableName) {
+    this.clear();
     return `DROP TABLE IF EXISTS "${tableName}"`;
   }
 
@@ -653,6 +659,7 @@ class SqliteOrm {
    * 构建 CREATE TABLE 语句
    */
   public buildCreate(option: TableFieldsOption[]) {
+    this.clear();
     const list: string[] = [];
 
     option.forEach(e => {

@@ -1,0 +1,11 @@
+// Vitest Snapshot v1
+
+exports[`base methods > deleteAll 1`] = `"DELETE FROM \\"my_table\\" WHERE 1=1"`;
+
+exports[`base methods > deleteById 1`] = `"DELETE FROM \\"my_table\\" WHERE id=1"`;
+
+exports[`base methods > deleteTable 1`] = `"DROP TABLE IF EXISTS \\"hello.db\\""`;
+
+exports[`base methods > findById 1`] = `"SELECT * FROM \\"my_table\\" WHERE id=1"`;
+
+exports[`base methods > selectAll 1`] = `"SELECT * FROM \\"my_table\\""`;
