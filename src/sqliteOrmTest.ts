@@ -1,6 +1,6 @@
 import SqliteOrm from "./SqliteOrm";
 
-const sqliteOrm = new SqliteOrm({ tableName: "test.db" });
+const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: false });
 
 type Persion = {
   name: string;
@@ -43,11 +43,11 @@ console.log("sql1: ", sql1);
 const sql2 = sqliteOrm
   .setTableName("my_table")
   .select("name,age")
-  .and("name", ">", "张三") // -> 丢失 AND 等价于 where()
+  .and("name", ">", "张三") // -> 注意: 丢失 AND 等价于 where()
   .groupBy("name")
   .orderBy("DESC", "name,age")
   .limit(10, 15)
-  .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
+  // .fillValue(true) // -> 注意: 会改变本次调用及其之后的值填充模式
   .or("gex", "=", "男")
   .andArray("ids", "IN", [1, 2, 3])
   .and("uuids", "IN", [1, 2, 3])
@@ -119,7 +119,7 @@ console.log("sql7: ", sql7);
 
 const sql8 = sqliteOrm.addColumn("new_name", "TEXT");
 console.log("sql8: ", sql8);
-// sql8:  ALTER TABLE "my_table" ADD new_name TEXT;
+// sql8:  [ 'ALTER TABLE "my_table" ADD new_name TEXT;', [] ]
 
 const sql9 = sqliteOrm.tableInfo();
 console.log("sql9: ", sql9);
@@ -200,4 +200,4 @@ console.log("sql16: ", sql16);
 
 const sql17 = sqliteOrm.deleteTable("hello.db");
 console.log("sql17: ", sql17);
-// sql17:  DROP TABLE IF EXISTS "hello.db"
+// sql17:  [ 'DROP TABLE IF EXISTS "hello.db"', [] ]

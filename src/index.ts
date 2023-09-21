@@ -2,7 +2,7 @@ import SqliteOrm from "./SqliteOrm";
 
 const VERSION = "__VERSION__";
 
-export { 
+export {
   SqliteOrm as default,
   SqliteOrm,
   VERSION,

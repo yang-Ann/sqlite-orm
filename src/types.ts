@@ -35,8 +35,8 @@ export type CurOrmStoreType = {
   count?: string;
   /** 当前的操作类型 */
   curOper?: CurOperType;
-  /** 是否值填充模式 */
-  isFillValue: boolean;
+  // /** 是否值填充模式 */
+  // isFillValue: boolean;
   /** 填充的值 */
   fillValue: any[];
   /** 保存 GROUP BY */

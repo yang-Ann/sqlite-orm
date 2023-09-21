@@ -19,6 +19,7 @@ class SqliteOrm {
     public opt: {
       /** 表名称 */
       tableName: string;
+      isFillValue: boolean;
     }
   ) {}
 
@@ -36,18 +37,18 @@ class SqliteOrm {
       groupBy: undefined,
       where: undefined,
       limit: undefined,
-      isFillValue: true,
-      // isFillValue: false,
       fillValue: []
     };
   }
 
+  /** 表名 */
   get tableName() {
     return this.opt.tableName;
   }
 
+  /** 是否值填充模式 */
   get isFillValue() {
-    return this.curOrmStore.isFillValue;
+    return this.opt.isFillValue;
   }
 
   /** 获取表名称 */
@@ -156,7 +157,7 @@ class SqliteOrm {
 
   /** 开启值填充模式 */
   fillValue(flag = true) {
-    this.curOrmStore.isFillValue = flag;
+    this.opt.isFillValue = flag;
     return this;
   }
 
@@ -288,6 +289,7 @@ class SqliteOrm {
     return this.setWhere(key, connect, value, "OR");
   }
 
+  /** 获取 WHERE 普通的连接符 */
   private getConnectItem(value = ""): WhereItem {
     return {
       key: "",
@@ -357,7 +359,13 @@ class SqliteOrm {
     return this;
   }
 
-  /** 获取原始sql语句 */
+  /** 
+   * 获取原始sql语句
+   * 
+   * 返回值是一个数组 @return `[string, any[]]`
+   * - 索引为0是一个 sql 语句, 当开启了`isFillValue`里的值是使用`?`代替
+   * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应的值
+   */
   getSqlRaw() {
     return this.buildRawSql();
   }
@@ -492,23 +500,24 @@ class SqliteOrm {
     // console.log("values: ", values);
     // console.log("fillValue: ", this.curOrmStore.fillValue);
 
-    if (this.curOrmStore.isFillValue) {
+    if (this.isFillValue) {
       const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
       return [`${fieldSql} ${values}`, fillValue];
     } else {
-      return `${fieldSql} ${values}`;
+      return [`${fieldSql} ${values}`, []];
     }
   }
 
+  /** 简单的克隆数据 */
   cloneData(data: any) {
     return JSON.parse(JSON.stringify(data));
   }
 
   /** 生成 sql */
-  buildRawSql(): string | [string, any[]] {
+  buildRawSql(): [string, any[]] {
     const curOper = this.curOrmStore.curOper;
     if (!curOper) {
-      return "";
+      return ["", []];
     }
 
     let sql = "";
@@ -561,7 +570,7 @@ class SqliteOrm {
       return [sql, fillValue];
     } else {
       this.clearCurOrmStore();
-      return sql;
+      return [sql, []];
     }
   }
 
@@ -574,7 +583,11 @@ class SqliteOrm {
    */
   addColumn(field: string, type: DataType, tableName = this.tableName) {
     this.clearCurOrmStore();
-    return `ALTER TABLE "${tableName}" ADD ${field} ${type};`;
+    if (this.isFillValue) {
+      return [`ALTER TABLE "${tableName}" ADD ${field} ${type};`, []];
+    } else {
+      return [`ALTER TABLE "${tableName}" ADD ${field} ${type};`, []];
+    }
   }
 
   /**
@@ -740,7 +753,7 @@ class SqliteOrm {
     if (this.isFillValue) {
       return [sql, values];
     } else {
-      return sql;
+      return [sql, []];
     }
   }
 
@@ -752,7 +765,7 @@ class SqliteOrm {
     if (this.isFillValue) {
       ret = [`PRAGMA user_version = ?`, version];
     } else {
-      ret = `PRAGMA user_version = ${version}`;
+      ret = [`PRAGMA user_version = ${version}`, []];
     }
     this.clearCurOrmStore();
     return ret;
@@ -762,29 +775,38 @@ class SqliteOrm {
    * 获取数据库表信息
    */
   tableInfo(tableName = this.tableName) {
-    const temp = new SqliteOrm({ tableName: "sqlite_master" });
+    const temp = new SqliteOrm({ tableName: "sqlite_master", isFillValue: this.opt.isFillValue });
     return temp.select().where("type", "=", "table").and("name", "=", tableName).getSqlRaw();
   }
 
+  /** 根据 id 查询指定数据 */
   findById(id: string | number, field = "id") {
     return this.clearCurOrmStore().select().where(field, "=", id).getSqlRaw();
   }
 
+  /** 查询所有的数据 */
   selectAll(tableName = this.tableName) {
     return this.clearCurOrmStore().setTableName(tableName).select().getSqlRaw();
   }
 
+  /** 根据 id 删除指定的数据 */
   deleteById(id: string | number, field = "id") {
     return this.clearCurOrmStore().delete().where(field, "=", id).getSqlRaw();
   }
 
+  /** 删除所有的数据 */
   deleteAll(tableName = this.tableName) {
     return this.clearCurOrmStore().setTableName(tableName).delete().where("1", "=", 1).getSqlRaw();
   }
 
+  /** 删除表 */
   deleteTable(tableName = this.tableName) {
     this.clearCurOrmStore();
-    return `DROP TABLE IF EXISTS "${tableName}"`;
+    if (this.isFillValue) {
+      return [`DROP TABLE IF EXISTS ?`, [tableName]];
+    } else {
+      return [`DROP TABLE IF EXISTS "${tableName}"`, []];
+    }
   }
 
   /**
@@ -801,7 +823,11 @@ class SqliteOrm {
     });
 
     const sql = `CREATE TABLE IF NOT EXISTS "${this.tableName}" (${list.join(", ")});`;
-    return sql;
+    if (this.isFillValue) {
+      return [sql, []];
+    } else {
+      return [sql, []];
+    }
   }
 
   // TODO
