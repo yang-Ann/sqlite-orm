@@ -8,8 +8,9 @@ import type {
   WhereType,
   DataType,
   TableFieldsOption,
+  SqliteOrmRsultType,
   BuildUpdateByWhenOption
-} from "types";
+} from "./types";
 
 /**
  * SQLite ORM
@@ -89,14 +90,10 @@ class SqliteOrm {
    * @param data 插入的数据
    * @returns `string`
    */
-  inser<T extends MyObject>(data: T) {
-    const values = this.buildInsertValues([data]);
+  inser<T extends MyObject>(data: T): SqliteOrmRsultType {
+    const [sql, parmas] = this.buildInsertValues([data]);
     this.clearCurOrmStore();
-    if (Array.isArray(values)) {
-      return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
-    } else {
-      return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
-    }
+    return [`INSERT or REPLACE INTO "${this.tableName}" ${sql}`, parmas];
   }
 
   /**
@@ -105,11 +102,11 @@ class SqliteOrm {
    * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
    * @returns `string[]`
    */
-  insers<T extends MyObject[]>(datas: T, maxSize = 999) {
+  insers<T extends MyObject[]>(datas: T, maxSize = 999): SqliteOrmRsultType[] {
     // 一次最多可以保存多少个字段的数据
     // const MAX_SIZE = 999;
     if (datas.length === 0) {
-      return "";
+      return [];
     }
 
     // 这里取第0项的字段信息
@@ -125,13 +122,9 @@ class SqliteOrm {
 
     return allData.map(items => {
       // 这里要返回一个数组, 因为一次最多插入 999 个值
-      const values = this.buildInsertValues(items);
+      const [sql, params] = this.buildInsertValues(items);
       this.clearCurOrmStore();
-      if (Array.isArray(values)) {
-        return [`INSERT or REPLACE INTO "${this.tableName}" ${values[0]}`, values[1]];
-      } else {
-        return `INSERT or REPLACE INTO "${this.tableName}" ${values}`;
-      }
+      return [`INSERT or REPLACE INTO "${this.tableName}" ${sql}`, params];
     });
   }
 
@@ -359,9 +352,9 @@ class SqliteOrm {
     return this;
   }
 
-  /** 
+  /**
    * 获取原始sql语句
-   * 
+   *
    * 返回值是一个数组 @return `[string, any[]]`
    * - 索引为0是一个 sql 语句, 当开启了`isFillValue`里的值是使用`?`代替
    * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应的值
@@ -457,9 +450,9 @@ class SqliteOrm {
   }
 
   /** 生成 INSERT VLAUES */
-  private buildInsertValues(insertDatas?: any[]) {
+  private buildInsertValues(insertDatas?: any[]): SqliteOrmRsultType {
     if (!insertDatas || insertDatas.length === 0) {
-      return "";
+      return ["", []];
     }
 
     // 这里取第0项的字段信息
@@ -514,7 +507,7 @@ class SqliteOrm {
   }
 
   /** 生成 sql */
-  buildRawSql(): [string, any[]] {
+  buildRawSql(): SqliteOrmRsultType {
     const curOper = this.curOrmStore.curOper;
     if (!curOper) {
       return ["", []];
@@ -581,7 +574,7 @@ class SqliteOrm {
    * @param tableName 表名
    * @returns `string`
    */
-  addColumn(field: string, type: DataType, tableName = this.tableName) {
+  addColumn(field: string, type: DataType, tableName = this.tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     if (this.isFillValue) {
       return [`ALTER TABLE "${tableName}" ADD ${field} ${type};`, []];
@@ -622,13 +615,13 @@ class SqliteOrm {
   /**
    * 执行 update when 语句(支持大数据量, 内部会做切分执行), 参考`$buildUpdateByWhen`
    */
-  buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>) {
+  buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>): SqliteOrmRsultType[] {
     if (opt.datas.length === 0) {
       console.warn("数组数据为空");
       return [];
     }
 
-    const sqls = [];
+    const sqls: [string, any[]][] = [];
 
     // 切片数据
     const dataSlice = this.dataSlice({
@@ -717,7 +710,7 @@ class SqliteOrm {
    *   WHERE epcNum="4400899522000294" OR epcNum="44008995HD006822" OR epcNum="44008995HD006875"
    * ```
    */
-  private $buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>) {
+  private $buildUpdateByWhen<T = any>(opt: BuildUpdateByWhenOption<T>): SqliteOrmRsultType {
     const conditions: string[] = [];
     const values: any[] = [];
 
@@ -800,10 +793,11 @@ class SqliteOrm {
   }
 
   /** 删除表 */
-  deleteTable(tableName = this.tableName) {
+  deleteTable(tableName = this.tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     if (this.isFillValue) {
-      return [`DROP TABLE IF EXISTS ?`, [tableName]];
+      return [`DROP TABLE IF EXISTS "${tableName}"`, []];
+      // return [`DROP TABLE IF EXISTS ?`, [tableName]];
     } else {
       return [`DROP TABLE IF EXISTS "${tableName}"`, []];
     }
@@ -812,7 +806,7 @@ class SqliteOrm {
   /**
    * 构建 CREATE TABLE 语句
    */
-  public buildCreate(option: TableFieldsOption[]) {
+  public buildCreate(option: TableFieldsOption[]): SqliteOrmRsultType {
     this.clearCurOrmStore();
     const list: string[] = [];
 

@@ -1,5 +1,6 @@
 import SqliteOrm from "./SqliteOrm";
 
+// const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: true });
 const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: false });
 
 type Persion = {
@@ -24,7 +25,10 @@ const sql0 = sqliteOrm.buildCreate([
   { field: "weight", type: "FLOAT" }
 ]);
 console.log("sql0: ", sql0);
-// sql0:  CREATE TABLE IF NOT EXISTS "test.db" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);
+// sql0:  [
+//   'CREATE TABLE IF NOT EXISTS "test.db" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);',
+//   []
+// ]
 
 const sql1 = sqliteOrm
   .select()
@@ -177,6 +181,10 @@ console.log("sql10: ", sql10);
 //     [ '小张', '小张-22-男', 22, 220 ]
 //   ]
 // ]
+
+const sql11 = sqliteOrm.update(datas[0]).where("id", "=", 1).getSqlRaw();
+console.log("sql11: ", sql11);
+// sql11:  [ 'UPDATE "my_table" SET name="张三", age="18", gex="男" WHERE id=1', [] ]
 
 const sql12 = sqliteOrm.setVersion(2);
 console.log("sql12: ", sql12);

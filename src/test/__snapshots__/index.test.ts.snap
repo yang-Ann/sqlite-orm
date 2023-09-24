@@ -1,33 +1,37 @@
 // Vitest Snapshot v1
 
-exports[`addColumn > "ALTER TABLE \\"my_table\\" ADD new_name TEXT;" 1`] = `"ALTER TABLE \\"my_table\\" ADD new_name TEXT;"`;
+exports[`addColumn > "ALTER TABLE \\"my_table\\" ADD new_name TEXT;" 1`] = `
+[
+  "ALTER TABLE \\"my_table\\" ADD new_name TEXT;",
+  [],
+]
+`;
 
 exports[`base methods > deleteAll 1`] = `
 [
-  "DELETE FROM \\"my_table\\" WHERE 1=?",
-  [
-    1,
-  ],
+  "DELETE FROM \\"my_table\\" WHERE 1=1",
+  [],
 ]
 `;
 
 exports[`base methods > deleteById 1`] = `
 [
-  "DELETE FROM \\"my_table\\" WHERE id=?",
-  [
-    1,
-  ],
+  "DELETE FROM \\"my_table\\" WHERE id=1",
+  [],
 ]
 `;
 
-exports[`base methods > deleteTable 1`] = `"DROP TABLE IF EXISTS \\"hello.db\\""`;
+exports[`base methods > deleteTable 1`] = `
+[
+  "DROP TABLE IF EXISTS \\"hello.db\\"",
+  [],
+]
+`;
 
 exports[`base methods > findById 1`] = `
 [
-  "SELECT * FROM \\"my_table\\" WHERE id=?",
-  [
-    1,
-  ],
+  "SELECT * FROM \\"my_table\\" WHERE id=1",
+  [],
 ]
 `;
 
@@ -38,7 +42,12 @@ exports[`base methods > selectAll 1`] = `
 ]
 `;
 
-exports[`create sql > "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);" 1`] = `"CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);"`;
+exports[`create sql > "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);" 1`] = `
+[
+  "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);",
+  [],
+]
+`;
 
 exports[`insert 1`] = `
 [
@@ -141,7 +150,12 @@ exports[`select 5`] = `
 ]
 `;
 
-exports[`setVersion 1`] = `"PRAGMA user_version = 2"`;
+exports[`setVersion 1`] = `
+[
+  "PRAGMA user_version = 2",
+  [],
+]
+`;
 
 exports[`tableInfo 1`] = `
 [
@@ -149,6 +163,18 @@ exports[`tableInfo 1`] = `
   [
     "table",
     "my_table",
+  ],
+]
+`;
+
+exports[`update 1`] = `
+[
+  "UPDATE \\"my_table\\" SET name=?, age=?, gex=? WHERE id=?",
+  [
+    1,
+    "张三",
+    18,
+    "男",
   ],
 ]
 `;

@@ -5,6 +5,8 @@ export type DataType = "INTEGER" | "LONG" | "FLOAT" | "VARCHAR" | "TEXT";
 
 export type MyObject<T = any> = { [k in string]: T };
 
+export type SqliteOrmRsultType = [string, any[]];
+
 /** 表字段配置 */
 export type TableFieldsOption = {
   /** 字段名 */

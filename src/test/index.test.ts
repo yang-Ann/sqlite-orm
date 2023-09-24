@@ -2,7 +2,7 @@ import SqliteOrm from "../SqliteOrm.js";
 // vitest: https://cn.vitest.dev/guide/
 import { test, expect, describe } from "vitest";
 
-const sqliteOrm = new SqliteOrm({ tableName: "test.db" });
+const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: true });
 
 type Persion = {
   name: string;
@@ -48,7 +48,7 @@ test("select", () => {
     .groupBy("name")
     .orderBy("DESC", "name,age")
     .limit(10, 15)
-    .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
+    // .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
     .or("gex", "=", "男")
     .andArray("ids", "IN", [1, 2, 3])
     .and("uuids", "IN", [1, 2, 3])
@@ -56,7 +56,26 @@ test("select", () => {
 
   // expect(sql2).toMatchSnapshot();
 
-  expect(sql2).toMatchInlineSnapshot('"SELECT name,age FROM \\"my_table\\" WHERE name>\\"张三\\" OR gex=\\"男\\" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15"');
+  expect(sql2).toMatchInlineSnapshot(`
+    [
+      "SELECT name,age FROM \\"my_table\\" WHERE name>? OR gex=? AND ( ids IN ? AND ids IN ? AND ids IN ? ) AND uuids IN (?, ?, ?) GROUP BY ? ORDER BY ? ? LIMIT ?,?",
+      [
+        "张三",
+        "男",
+        1,
+        2,
+        3,
+        1,
+        2,
+        3,
+        "name",
+        "DESC",
+        "name,age",
+        10,
+        15,
+      ],
+    ]
+  `);
 
 
   const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
@@ -141,6 +160,11 @@ test("updateByWhen", () => {
     ]
   });
   expect(sql10).toMatchSnapshot();
+});
+
+test("update", () => {
+  const sql11 = sqliteOrm.update(datas[0]).where("id", "=", 1).getSqlRaw();
+  expect(sql11).toMatchSnapshot();
 });
 
 
