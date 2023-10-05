@@ -1067,7 +1067,7 @@ class SqliteHelper {
         RNFS.appendFile(destSqlFile, res.sql + "\n\n");
 
         const dataList = await this.getList();
-        const { sql, params } = await this.buildInsertSql(dataList);
+        const [sql, params] = this.sqliteOrm.insers(dataList);
         RNFS.appendFile(destSqlFile, "-- insert\n");
         RNFS.appendFile(destSqlFile, sql + "\n\n");
 
