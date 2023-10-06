@@ -16,13 +16,19 @@ import type {
  * SQLite ORM
  */
 class SqliteOrm {
+  #originTableName: string;
+  #originFillValue: boolean;
+
   constructor(
     public opt: {
       /** 表名称 */
       tableName: string;
       isFillValue: boolean;
     }
-  ) {}
+  ) {
+    this.#originTableName = opt.tableName;
+    this.#originFillValue = opt.isFillValue;
+  }
 
   private curOrmStore: CurOrmStoreType = this.getDefaultCurOrmStore();
 
@@ -66,6 +72,8 @@ class SqliteOrm {
   /** 清除ORM状态 */
   private clearCurOrmStore() {
     this.curOrmStore = this.getDefaultCurOrmStore();
+    this.opt.isFillValue = this.#originFillValue;
+    this.opt.tableName = this.#originTableName;
     return this;
   }
 
@@ -806,7 +814,7 @@ class SqliteOrm {
   /**
    * 构建 CREATE TABLE 语句
    */
-  public buildCreate(option: TableFieldsOption[]): SqliteOrmRsultType {
+  public buildCreate(option: TableFieldsOption[], tableName = this.tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     const list: string[] = [];
 
@@ -816,7 +824,7 @@ class SqliteOrm {
       list.push(line);
     });
 
-    const sql = `CREATE TABLE IF NOT EXISTS "${this.tableName}" (${list.join(", ")});`;
+    const sql = `CREATE TABLE IF NOT EXISTS "${tableName}" (${list.join(", ")});`;
     if (this.isFillValue) {
       return [sql, []];
     } else {

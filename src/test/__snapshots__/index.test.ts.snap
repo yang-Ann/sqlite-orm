@@ -2,22 +2,26 @@
 
 exports[`addColumn > "ALTER TABLE \\"my_table\\" ADD new_name TEXT;" 1`] = `
 [
-  "ALTER TABLE \\"my_table\\" ADD new_name TEXT;",
+  "ALTER TABLE \\"my_table.db\\" ADD new_name TEXT;",
   [],
 ]
 `;
 
 exports[`base methods > deleteAll 1`] = `
 [
-  "DELETE FROM \\"my_table\\" WHERE 1=1",
-  [],
+  "DELETE FROM \\"my_table.db\\" WHERE 1=?",
+  [
+    1,
+  ],
 ]
 `;
 
 exports[`base methods > deleteById 1`] = `
 [
-  "DELETE FROM \\"my_table\\" WHERE id=1",
-  [],
+  "DELETE FROM \\"my_table.db\\" WHERE id=?",
+  [
+    1,
+  ],
 ]
 `;
 
@@ -30,14 +34,16 @@ exports[`base methods > deleteTable 1`] = `
 
 exports[`base methods > findById 1`] = `
 [
-  "SELECT * FROM \\"my_table\\" WHERE id=1",
-  [],
+  "SELECT * FROM \\"my_table.db\\" WHERE id=?",
+  [
+    1,
+  ],
 ]
 `;
 
 exports[`base methods > selectAll 1`] = `
 [
-  "SELECT * FROM \\"my_table\\"",
+  "SELECT * FROM \\"my_table.db\\"",
   [],
 ]
 `;
@@ -51,7 +57,7 @@ exports[`create sql > "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIM
 
 exports[`insert 1`] = `
 [
-  "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
+  "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
   [
     "张三",
     18,
@@ -64,7 +70,7 @@ exports[`insert 1`] = `
 exports[`inserts 1`] = `
 [
   [
-    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
     [
       "张三",
       18,
@@ -75,7 +81,7 @@ exports[`inserts 1`] = `
     ],
   ],
   [
-    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
+    "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex) VALUES (?, ?, ?), (?, ?, ?)",
     [
       "王五",
       18,
@@ -86,7 +92,7 @@ exports[`inserts 1`] = `
     ],
   ],
   [
-    "INSERT or REPLACE INTO \\"my_table\\" (name, age, gex) VALUES (?, ?, ?)",
+    "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex) VALUES (?, ?, ?)",
     [
       "小张",
       22,
@@ -98,7 +104,7 @@ exports[`inserts 1`] = `
 
 exports[`select 1`] = `
 [
-  "SELECT * FROM \\"test.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
+  "SELECT * FROM \\"my_table.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
   [
     "张三",
     "18",
@@ -110,9 +116,16 @@ exports[`select 1`] = `
 ]
 `;
 
+exports[`select 2`] = `
+[
+  "SELECT name,age FROM \\"test.db\\" WHERE name>\\"张三\\" OR gex=\\"男\\" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15",
+  [],
+]
+`;
+
 exports[`select 3`] = `
 [
-  "SELECT * FROM \\"my_table\\" WHERE name IN (?, ?, ?) OR age=?",
+  "SELECT * FROM \\"my_table.db\\" WHERE name IN (?, ?, ?) OR age=?",
   [
     1,
     2,
@@ -124,7 +137,7 @@ exports[`select 3`] = `
 
 exports[`select 4`] = `
 [
-  "SELECT * FROM \\"my_table\\" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )",
+  "SELECT * FROM \\"my_table.db\\" WHERE ( name=? AND name=? AND name=? ) OR age=? AND gex IN (?, ?, ?) AND ( gex!=? AND gex!=? AND gex!=false )",
   [
     1,
     2,
@@ -141,7 +154,7 @@ exports[`select 4`] = `
 
 exports[`select 5`] = `
 [
-  "SELECT count(id) FROM \\"my_table\\" WHERE age>? AND gex=? GROUP BY ?",
+  "SELECT count(id) FROM \\"my_table.db\\" WHERE age>? AND gex=? GROUP BY ?",
   [
     18,
     "男",
@@ -162,14 +175,14 @@ exports[`tableInfo 1`] = `
   "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",
   [
     "table",
-    "my_table",
+    "my_table.db",
   ],
 ]
 `;
 
 exports[`update 1`] = `
 [
-  "UPDATE \\"my_table\\" SET name=?, age=?, gex=? WHERE id=?",
+  "UPDATE \\"my_table.db\\" SET name=?, age=?, gex=? WHERE id=?",
   [
     1,
     "张三",
@@ -182,7 +195,7 @@ exports[`update 1`] = `
 exports[`updateByWhen 1`] = `
 [
   [
-    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    "UPDATE \\"my_table.db\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
     [
       "张三",
       "张三-18-男",
@@ -195,7 +208,7 @@ exports[`updateByWhen 1`] = `
     ],
   ],
   [
-    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
+    "UPDATE \\"my_table.db\\" SET name = CASE WHEN name=? THEN ? WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? WHEN age=? THEN ? END",
     [
       "王五",
       "王五-18-女",
@@ -208,7 +221,7 @@ exports[`updateByWhen 1`] = `
     ],
   ],
   [
-    "UPDATE \\"my_table\\" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END",
+    "UPDATE \\"my_table.db\\" SET name = CASE WHEN name=? THEN ? END, age = CASE WHEN age=? THEN ? END",
     [
       "小张",
       "小张-22-男",

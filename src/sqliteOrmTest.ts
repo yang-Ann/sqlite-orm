@@ -1,7 +1,6 @@
 import SqliteOrm from "./SqliteOrm";
 
-// const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: true });
-const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: false });
+const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
 
 type Persion = {
   name: string;
@@ -17,13 +16,16 @@ const datas: Persion[] = [
   { name: "小张", age: 22, gex: "男" }
 ];
 
-const sql0 = sqliteOrm.buildCreate([
-  { field: "id", type: "INTEGER", isKey: true },
-  { field: "name", type: "TEXT", isNotNull: true },
-  { field: "age", type: "INTEGER", isNotNull: true },
-  { field: "height", type: "FLOAT" },
-  { field: "weight", type: "FLOAT" }
-]);
+const sql0 = sqliteOrm.buildCreate(
+  [
+    { field: "id", type: "INTEGER", isKey: true },
+    { field: "name", type: "TEXT", isNotNull: true },
+    { field: "age", type: "INTEGER", isNotNull: true },
+    { field: "height", type: "FLOAT" },
+    { field: "weight", type: "FLOAT" }
+  ],
+  "test.db"
+);
 console.log("sql0: ", sql0);
 // sql0:  [
 //   'CREATE TABLE IF NOT EXISTS "test.db" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);',
@@ -40,18 +42,18 @@ const sql1 = sqliteOrm
 
 console.log("sql1: ", sql1);
 // sql1:  [
-//   'SELECT * FROM "test.db" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?',
+//   'SELECT * FROM "my_table.db" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?',
 //   [ '张三', '18', '张三', '李四', '王五', '男' ]
 // ]
 
 const sql2 = sqliteOrm
-  .setTableName("my_table")
+  .setTableName("my_table.db") // -> 只会改变本次调用的 tableName, 可以在任意时刻调用
+  .fillValue(false) // -> 只会改变本次调用的值填充模式, 可以在任意时刻调用
   .select("name,age")
   .and("name", ">", "张三") // -> 注意: 丢失 AND 等价于 where()
   .groupBy("name")
   .orderBy("DESC", "name,age")
   .limit(10, 15)
-  // .fillValue(true) // -> 注意: 会改变本次调用及其之后的值填充模式
   .or("gex", "=", "男")
   .andArray("ids", "IN", [1, 2, 3])
   .and("uuids", "IN", [1, 2, 3])
@@ -90,17 +92,16 @@ console.log("sql5: ", sql5);
 //   [ 18, '男', 'name' ]
 // ]
 
-const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean }>({
+const sql6 = sqliteOrm.inser<Persion>({
   name: "张三",
   age: 18,
-  gex: "男",
-  isFlag: true // -> true = 1, false = 0
+  gex: "男"
 });
 
 console.log("sql6: ", sql6);
 // sql6:  [
-//   'INSERT or REPLACE INTO "my_table" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)',
-//   [ '张三', 18, '男', true ]
+//   'INSERT or REPLACE INTO "my_table" (name, age, gex, isFlag) VALUES (?, ?, ?)',
+//   [ '张三', 18, '男' ]
 // ]
 
 const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量

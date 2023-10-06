@@ -2,7 +2,7 @@ import SqliteOrm from "../SqliteOrm.js";
 // vitest: https://cn.vitest.dev/guide/
 import { test, expect, describe } from "vitest";
 
-const sqliteOrm = new SqliteOrm({ tableName: "test.db", isFillValue: true });
+const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
 
 type Persion = {
   name: string;
@@ -25,7 +25,7 @@ test("create sql", () => {
     { field: "age", type: "INTEGER", isNotNull: true },
     { field: "height", type: "FLOAT" },
     { field: "weight", type: "FLOAT" },
-  ]);
+  ], "test.db");
 
   expect(sql0).toMatchSnapshot('"CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL, height FLOAT, weight FLOAT);"');
 });
@@ -42,40 +42,19 @@ test("select", () => {
   expect(sql1).toMatchSnapshot();
 
   const sql2 = sqliteOrm
-    .setTableName("my_table")
+    .setTableName("test.db") // -> 只会改变本次调用的 tableName, 可以在任意时刻调用
+    .fillValue(false) // -> 只会改变本次调用的值填充模式, 可以在任意时刻调用
     .select("name,age")
     .and("name", ">", "张三") // -> 丢失 AND 等价于 where()
     .groupBy("name")
     .orderBy("DESC", "name,age")
     .limit(10, 15)
-    // .fillValue(false) // -> 会改变本次调用的值填充模式, 可以在任意时刻调用
     .or("gex", "=", "男")
     .andArray("ids", "IN", [1, 2, 3])
     .and("uuids", "IN", [1, 2, 3])
     .getSqlRaw();
 
-  // expect(sql2).toMatchSnapshot();
-
-  expect(sql2).toMatchInlineSnapshot(`
-    [
-      "SELECT name,age FROM \\"my_table\\" WHERE name>? OR gex=? AND ( ids IN ? AND ids IN ? AND ids IN ? ) AND uuids IN (?, ?, ?) GROUP BY ? ORDER BY ? ? LIMIT ?,?",
-      [
-        "张三",
-        "男",
-        1,
-        2,
-        3,
-        1,
-        2,
-        3,
-        "name",
-        "DESC",
-        "name,age",
-        10,
-        15,
-      ],
-    ]
-  `);
+  expect(sql2).toMatchSnapshot();
 
 
   const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
