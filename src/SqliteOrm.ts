@@ -23,6 +23,7 @@ class SqliteOrm {
     public opt: {
       /** 表名称 */
       tableName: string;
+      /** 是否开启值填充模式 */
       isFillValue: boolean;
     }
   ) {

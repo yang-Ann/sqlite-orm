@@ -3,6 +3,7 @@ export type DataType = "INTEGER" | "LONG" | "FLOAT" | "VARCHAR" | "TEXT";
 export type MyObject<T = any> = {
     [k in string]: T;
 };
+export type SqliteOrmRsultType = [string, any[]];
 /** 表字段配置 */
 export type TableFieldsOption = {
     /** 字段名 */
@@ -14,15 +15,15 @@ export type TableFieldsOption = {
     /** 不能为空 */
     isNotNull?: boolean;
 };
-export type CurOperType = keyof Pick<CurOrmStoreType, "delect" | "update" | "select" | "count">;
+export type CurOperType = keyof Pick<CurOrmStoreType, "delete" | "update" | "select" | "count">;
 /** ORM 保存的状态 */
 export type CurOrmStoreType = {
     /** INSERT 相关操作 */
     insert?: string;
     /** 批量 INSERT 相关操作 */
     inserts?: string[];
-    /** DELECT 相关操作 */
-    delect?: boolean;
+    /** DELETE 相关操作 */
+    delete?: boolean;
     /** UPDATE 相关操作 */
     update?: MyObject;
     /** SELECT 相关操作 */
@@ -31,18 +32,16 @@ export type CurOrmStoreType = {
     count?: string;
     /** 当前的操作类型 */
     curOper?: CurOperType;
+    /** 填充的值 */
+    fillValue: any[];
     /** 保存 GROUP BY */
     groupBy?: string;
     /** 保存 ORDER BY */
     orderBy?: [OrderByType, string];
     /** WHERE 条件汇总 */
-    where?: string[];
+    where?: WhereItem[];
     /** 是否有调用 where() */
     isSetWhere?: boolean;
-    /** WHERE AND 条件 */
-    and?: WhereItem[];
-    /** WHERE OR 条件 */
-    or?: WhereItem[];
     /** limit 条件 */
     limit?: [number, number];
 };
@@ -56,10 +55,39 @@ export type WhereConnectType = "=" | ">" | ">=" | "<" | "<=" | "!=" | WhereConne
 export type OrderByType = "ASC" | "DESC";
 /** Where 项 */
 export type WhereItem = {
+    /**
+     * 分类
+     * - WHERE 表示 and 和 or 操作
+     * - CONNECT 表示连接符一般是 OR, AND, (, )
+     *
+     */
+    type: "WHERE" | "CONNECT";
     /** 键 */
     key: string;
     /** 连接符 */
-    connect: WhereConnectType;
+    connect: WhereConnectType | "";
     /** 值 */
     value: any;
+};
+/** 构建 update when 配置 */
+export type BuildUpdateByWhenOption<T = any> = {
+    /** 操作的数据 */
+    datas: T[];
+    /** 一次最大更新多少条数据 */
+    onceMaxUpdateDataLength?: number;
+    /** 字段数据 */
+    fieldOpts: {
+        /** SET xxx 里的 xxx 字段 */
+        setField: string;
+        /** WHEN xxx=yyy 里的 xxx 数据 */
+        getWhenField: (row: T) => string | number;
+        /** WHEN xxx=yyy 里的 yyy 数据 */
+        getWhenValue: (row: T) => string | number;
+        /** THEN xxx=yyy 里的 yyy 数据 */
+        getThenValue: (row: T) => string | number;
+    }[];
+    /** 额外的 updateWhen 子句 */
+    getExtraUpdateWhen?: (updates: T[]) => string;
+    /** 额外的 where 子句 */
+    getExtraWhere?: (updates: T[]) => string;
 };

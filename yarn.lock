@@ -23,11 +23,6 @@
     "@typescript-eslint/eslint-plugin" "^5.57.0"
     "@typescript-eslint/parser" "^5.57.0"
 
-"@anlib/ts-config@^1.0.1":
-  version "1.0.3"
-  resolved "https://registry.npmmirror.com/@anlib/ts-config/-/ts-config-1.0.3.tgz#6654c22045a7faeb2f5a5e2c04bf7778a41b5d3a"
-  integrity sha512-nPfviqI45ifLn+iVKXpO3MZ115JuNBgpXldpeIP39P6NVWIRor1JHgxj9zC5ureKHEvsAEHiqoith/5bh3CIxQ==
-
 "@babel/code-frame@^7.22.13":
   version "7.22.13"
   resolved "https://registry.npmmirror.com/@babel/code-frame/-/code-frame-7.22.13.tgz#e3c1c099402598483b7a8c46a721d1038803755e"

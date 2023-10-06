@@ -1,4 +1,4 @@
-import SqliteOrm from "../SqliteOrm.js";
+import SqliteOrm from "../index";
 // vitest: https://cn.vitest.dev/guide/
 import { test, expect, describe } from "vitest";
 

@@ -1,4 +1,4 @@
-import SqliteOrm from "./SqliteOrm";
+import SqliteOrm from "./index";
 
 const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
 
