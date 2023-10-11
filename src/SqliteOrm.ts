@@ -50,23 +50,26 @@ class SqliteOrm {
   }
 
   /** 表名 */
-  get tableName() {
+  get $tableName() {
     return this.opt.tableName;
   }
 
   /** 是否值填充模式 */
-  get isFillValue() {
+  get $isFillValue() {
     return this.opt.isFillValue;
   }
 
-  /** 获取表名称 */
-  getTableName() {
-    return this.opt.tableName;
-  }
-
-  /** 修改表名称 */
+  /** 修改表名称(会影响后续所有的sql语句生成) */
   setTableName(tableName: string) {
     this.opt.tableName = tableName;
+    this.#originTableName = tableName;
+    return this;
+  }
+
+  /** 修改值填充模式(会影响后续所有的sql语句生成) */
+  setFillValue(flag: boolean) {
+    this.opt.isFillValue = flag;
+    this.#originFillValue = flag;
     return this;
   }
 
@@ -94,6 +97,18 @@ class SqliteOrm {
     return this;
   }
 
+  /** 设置表名称(影响单次的sql语句生成) */
+  tableName(tableName: string) {
+    this.opt.tableName = tableName;
+    return this;
+  }
+
+  /** 设置值填充模式(影响单次的sql语句生成) */
+  fillValue(flag = true) {
+    this.opt.isFillValue = flag;
+    return this;
+  }
+
   /**
    * 生成 INSERT 语句
    * @param data 插入的数据
@@ -102,7 +117,7 @@ class SqliteOrm {
   inser<T extends MyObject>(data: T): SqliteOrmRsultType {
     const [sql, parmas] = this.buildInsertValues([data]);
     this.clearCurOrmStore();
-    return [`INSERT or REPLACE INTO "${this.tableName}" ${sql}`, parmas];
+    return [`INSERT or REPLACE INTO "${this.$tableName}" ${sql}`, parmas];
   }
 
   /**
@@ -133,7 +148,7 @@ class SqliteOrm {
       // 这里要返回一个数组, 因为一次最多插入 999 个值
       const [sql, params] = this.buildInsertValues(items);
       this.clearCurOrmStore();
-      return [`INSERT or REPLACE INTO "${this.tableName}" ${sql}`, params];
+      return [`INSERT or REPLACE INTO "${this.$tableName}" ${sql}`, params];
     });
   }
 
@@ -157,12 +172,6 @@ class SqliteOrm {
     return this.setOperStore("count", field.startsWith("count(") ? `count(${field})` : field);
   }
 
-  /** 开启值填充模式 */
-  fillValue(flag = true) {
-    this.opt.isFillValue = flag;
-    return this;
-  }
-
   /** 设置 GROUP BY */
   groupBy(field: string) {
     this.curOrmStore.groupBy = field;
@@ -183,7 +192,7 @@ class SqliteOrm {
     let _value: any = value;
     if (value) {
       if (typeof value === "string") {
-        if (this.isFillValue) {
+        if (this.$isFillValue) {
           _value = "?";
           if (addDataFlag == "PUSH") {
             this.curOrmStore.fillValue.push(value);
@@ -196,7 +205,7 @@ class SqliteOrm {
       } else if (connect === "IN" && Array.isArray(value)) {
         const v = value
           .map(e => {
-            if (this.isFillValue) {
+            if (this.$isFillValue) {
               if (addDataFlag == "PUSH") {
                 this.curOrmStore.fillValue.push(e);
               } else {
@@ -213,7 +222,7 @@ class SqliteOrm {
 
         _value = `(${v})`;
       } else {
-        if (this.isFillValue) {
+        if (this.$isFillValue) {
           _value = "?";
           if (addDataFlag == "PUSH") {
             this.curOrmStore.fillValue.push(value);
@@ -356,8 +365,12 @@ class SqliteOrm {
   }
 
   /** 设置 LIMIT */
-  limit(limit: number, offset: number) {
-    this.curOrmStore.limit = [limit, offset];
+  limit(limit: number, offset?: number) {
+    if (typeof offset === "undefined") {
+      this.curOrmStore.limit = [limit];
+    } else {
+      this.curOrmStore.limit = [limit, offset];
+    }
     return this;
   }
 
@@ -413,7 +426,7 @@ class SqliteOrm {
     const groupBy = this.curOrmStore.groupBy;
     let ret = "";
     if (groupBy) {
-      if (this.isFillValue) {
+      if (this.$isFillValue) {
         this.curOrmStore.fillValue.push(groupBy);
         ret = "GROUP BY ?";
       } else {
@@ -430,7 +443,7 @@ class SqliteOrm {
 
     if (orderBy && orderBy.length) {
       const [field, sort] = orderBy;
-      if (this.isFillValue) {
+      if (this.$isFillValue) {
         this.curOrmStore.fillValue.push(field, sort);
         ret = `ORDER BY ? ?`;
       } else {
@@ -447,11 +460,20 @@ class SqliteOrm {
 
     if (limit && limit.length) {
       const [start, offset] = limit;
-      if (this.isFillValue) {
-        this.curOrmStore.fillValue.push(start, offset);
-        ret = `LIMIT ?,?`;
+      if (this.$isFillValue) {
+        if (typeof offset === "undefined") {
+          this.curOrmStore.fillValue.push(start);
+          ret = `LIMIT ?`;
+        } else {
+          this.curOrmStore.fillValue.push(start, offset);
+          ret = `LIMIT ?,?`;
+        }
       } else {
-        ret = `LIMIT ${start},${offset}`;
+        if (typeof offset === "undefined") {
+          ret = `LIMIT ${start}`;
+        } else {
+          ret = `LIMIT ${start},${offset}`;
+        }
       }
     }
 
@@ -476,14 +498,14 @@ class SqliteOrm {
           if (Object.prototype.hasOwnProperty.call(insertData, key)) {
             if (field === key) {
               const v = insertData[key];
-              if (this.isFillValue) {
+              if (this.$isFillValue) {
                 this.curOrmStore.fillValue.push(v);
               }
 
               if (typeof v === "string") {
-                val.push(this.isFillValue ? "?" : `"${v}"`);
+                val.push(this.$isFillValue ? "?" : `"${v}"`);
               } else {
-                val.push(this.isFillValue ? "?" : v);
+                val.push(this.$isFillValue ? "?" : v);
               }
             }
           }
@@ -502,7 +524,7 @@ class SqliteOrm {
     // console.log("values: ", values);
     // console.log("fillValue: ", this.curOrmStore.fillValue);
 
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
       return [`${fieldSql} ${values}`, fillValue];
     } else {
@@ -531,7 +553,7 @@ class SqliteOrm {
       count: `SELECT count(${this.curOrmStore.count}) FROM`
     };
 
-    sql = `${operMap[curOper]} "${this.tableName}"`;
+    sql = `${operMap[curOper]} "${this.$tableName}"`;
 
     const whereSql = this.buildWhere();
     const groupBySql = this.buildGroupBy();
@@ -548,7 +570,7 @@ class SqliteOrm {
         const _value = Object.values(updateData);
 
         let setSql;
-        if (this.isFillValue) {
+        if (this.$isFillValue) {
           setSql = fields
             .map((e, i) => {
               this.curOrmStore.fillValue.push(_value[i]);
@@ -566,7 +588,7 @@ class SqliteOrm {
     }
 
     sql = sql.replace(/\s+/g, " ").trim();
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
       this.clearCurOrmStore();
       return [sql, fillValue];
@@ -583,9 +605,9 @@ class SqliteOrm {
    * @param tableName 表名
    * @returns `string`
    */
-  addColumn(field: string, type: DataType, tableName = this.tableName): SqliteOrmRsultType {
+  addColumn(field: string, type: DataType, tableName = this.$tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       return [`ALTER TABLE "${tableName}" ADD ${field} ${type};`, []];
     } else {
       return [`ALTER TABLE "${tableName}" ADD ${field} ${type};`, []];
@@ -731,7 +753,7 @@ class SqliteOrm {
           const whenField = getWhenField(e);
           const whenValue = getWhenValue(e);
           const thenValue = getThenValue(e);
-          if (this.isFillValue) {
+          if (this.$isFillValue) {
             values.push(whenValue, thenValue);
             return `WHEN ${whenField}=? THEN ?`;
           } else {
@@ -750,9 +772,9 @@ class SqliteOrm {
     const extraUpdateWhen = opt.getExtraUpdateWhen ? ", " + opt.getExtraUpdateWhen(opt.datas) : "";
     const extraWhere = opt.getExtraWhere ? `WHERE ${opt.getExtraWhere(opt.datas)}` : "";
 
-    const sql = `UPDATE "${this.tableName}" ${updateWhen} ${extraUpdateWhen} ${extraWhere}`.trim();
+    const sql = `UPDATE "${this.$tableName}" ${updateWhen} ${extraUpdateWhen} ${extraWhere}`.trim();
 
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       return [sql, values];
     } else {
       return [sql, []];
@@ -764,7 +786,7 @@ class SqliteOrm {
    */
   setVersion(version: number) {
     let ret;
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       ret = [`PRAGMA user_version = ?`, version];
     } else {
       ret = [`PRAGMA user_version = ${version}`, []];
@@ -776,7 +798,7 @@ class SqliteOrm {
   /**
    * 获取数据库表信息
    */
-  tableInfo(tableName = this.tableName) {
+  tableInfo(tableName = this.$tableName) {
     const temp = new SqliteOrm({ tableName: "sqlite_master", isFillValue: this.opt.isFillValue });
     return temp.select().where("type", "=", "table").and("name", "=", tableName).getSqlRaw();
   }
@@ -787,8 +809,8 @@ class SqliteOrm {
   }
 
   /** 查询所有的数据 */
-  selectAll(tableName = this.tableName) {
-    return this.clearCurOrmStore().setTableName(tableName).select().getSqlRaw();
+  selectAll(tableName = this.$tableName) {
+    return this.clearCurOrmStore().tableName(tableName).select().getSqlRaw();
   }
 
   /** 根据 id 删除指定的数据 */
@@ -797,14 +819,14 @@ class SqliteOrm {
   }
 
   /** 删除所有的数据 */
-  deleteAll(tableName = this.tableName) {
-    return this.clearCurOrmStore().setTableName(tableName).delete().where("1", "=", 1).getSqlRaw();
+  deleteAll(tableName = this.$tableName) {
+    return this.clearCurOrmStore().tableName(tableName).delete().where("1", "=", 1).getSqlRaw();
   }
 
   /** 删除表 */
-  deleteTable(tableName = this.tableName): SqliteOrmRsultType {
+  deleteTable(tableName = this.$tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       return [`DROP TABLE IF EXISTS "${tableName}"`, []];
       // return [`DROP TABLE IF EXISTS ?`, [tableName]];
     } else {
@@ -815,7 +837,7 @@ class SqliteOrm {
   /**
    * 构建 CREATE TABLE 语句
    */
-  public buildCreate(option: TableFieldsOption[], tableName = this.tableName): SqliteOrmRsultType {
+  public buildCreate(option: TableFieldsOption[], tableName = this.$tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     const list: string[] = [];
 
@@ -826,7 +848,7 @@ class SqliteOrm {
     });
 
     const sql = `CREATE TABLE IF NOT EXISTS "${tableName}" (${list.join(", ")});`;
-    if (this.isFillValue) {
+    if (this.$isFillValue) {
       return [sql, []];
     } else {
       return [sql, []];

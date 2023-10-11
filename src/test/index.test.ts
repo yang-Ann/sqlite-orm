@@ -37,13 +37,16 @@ test("select", () => {
     .and("age", "!=", "18")
     .or("name", "IN", ["张三", "李四", "王五"])
     .or("gex", "IS NOT", "男")
+    .limit(5)
     .getSqlRaw();
 
   expect(sql1).toMatchSnapshot();
 
   const sql2 = sqliteOrm
-    .setTableName("test.db") // -> 只会改变本次调用的 tableName, 可以在任意时刻调用
-    .fillValue(false) // -> 只会改变本次调用的值填充模式, 可以在任意时刻调用
+    .tableName("test.db") // -> 只会改变本次调用的 tableName
+    // .setTableName() // -> 会改变后续所有的 tableName
+    .fillValue(false) // -> 只会改变本次调用的值填充模式
+    // .setFillValue(false) -> 会改变后续所有的值填充模式
     .select("name,age")
     .and("name", ">", "张三") // -> 丢失 AND 等价于 where()
     .groupBy("name")

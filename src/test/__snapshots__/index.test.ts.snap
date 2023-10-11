@@ -104,7 +104,7 @@ exports[`inserts 1`] = `
 
 exports[`select 1`] = `
 [
-  "SELECT * FROM \\"my_table.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?",
+  "SELECT * FROM \\"my_table.db\\" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ? LIMIT ?",
   [
     "张三",
     "18",
@@ -112,6 +112,7 @@ exports[`select 1`] = `
     "李四",
     "王五",
     "男",
+    5,
   ],
 ]
 `;

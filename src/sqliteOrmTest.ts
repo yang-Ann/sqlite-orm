@@ -38,17 +38,25 @@ const sql1 = sqliteOrm
   .and("age", "!=", "18")
   .or("name", "IN", ["张三", "李四", "王五"])
   .or("gex", "IS NOT", "男")
+  .limit(5)
   .getSqlRaw();
 
 console.log("sql1: ", sql1);
 // sql1:  [
-//   'SELECT * FROM "my_table.db" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ?',
-//   [ '张三', '18', '张三', '李四', '王五', '男' ]
+//   'SELECT * FROM "my_table.db" WHERE name=? AND age!=? OR name IN (?, ?, ?) OR gex IS NOT ? LIMIT ?',
+//   [
+//     '张三', '18',
+//     '张三', '李四',
+//     '王五', '男',
+//     5
+//   ]
 // ]
 
 const sql2 = sqliteOrm
-  .setTableName("my_table.db") // -> 只会改变本次调用的 tableName, 可以在任意时刻调用
-  .fillValue(false) // -> 只会改变本次调用的值填充模式, 可以在任意时刻调用
+  .tableName("test.db") // -> 只会改变本次调用的 tableName
+  // .setTableName() // -> 会改变后续所有的 tableName
+  .fillValue(false) // -> 只会改变本次调用的值填充模式
+  // .setFillValue(false) -> 会改变后续所有的值填充模式
   .select("name,age")
   .and("name", ">", "张三") // -> 注意: 丢失 AND 等价于 where()
   .groupBy("name")
@@ -60,7 +68,11 @@ const sql2 = sqliteOrm
   .getSqlRaw();
 
 console.log("sql2: ", sql2);
-// sql2:  SELECT name,age FROM "my_table" WHERE name>"张三" OR gex="男" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15
+// sql2:  [
+//   'SELECT name,age FROM "test.db" WHERE name>"张三" OR gex="男" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15',
+//   []
+// ]
+
 
 const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
 
