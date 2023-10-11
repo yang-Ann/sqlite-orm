@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="./lib/bundle.browser.js"></script>
+  <script type="module">
+    const SqliteOrm = window["@anlib/sqlite-orm"].default;
+    const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
+    const [sql, value] = sqliteOrm.select().fillValue(false).where("name", "=", "张三").limit(5).getSqlRaw();
+    console.log("sql: ", sql);
+    // sql:  SELECT * FROM "my_table.db" WHERE name="张三" LIMIT 5
+  </script>
+</body>
+
+</html>

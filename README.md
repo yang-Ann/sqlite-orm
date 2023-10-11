@@ -3,9 +3,9 @@
 ## 安装
 
 ```sh
-npm install sqlite-orm
-yarn install sqlite-orm
-pnpm install sqlite-orm
+npm install @anlib/sqlite-orm
+yarn install @anlib/sqlite-orm
+pnpm install @anlib/sqlite-orm
 ```
 
 ## 测试
@@ -18,7 +18,7 @@ pnpm test
 
 ## 基本使用
 ```ts
-import SqliteOrm from "sqlite-orm";
+import SqliteOrm from "@anlib/sqlite-orm";
 
 const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
 

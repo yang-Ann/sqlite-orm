@@ -20,17 +20,21 @@ declare class SqliteOrm {
     /** 获取默认的ORM方法 */
     private getDefaultCurOrmStore;
     /** 表名 */
-    get tableName(): string;
+    get $tableName(): string;
     /** 是否值填充模式 */
-    get isFillValue(): boolean;
-    /** 获取表名称 */
-    getTableName(): string;
-    /** 修改表名称 */
+    get $isFillValue(): boolean;
+    /** 修改表名称(会影响后续所有的sql语句生成) */
     setTableName(tableName: string): this;
+    /** 修改值填充模式(会影响后续所有的sql语句生成) */
+    setFillValue(flag: boolean): this;
     /** 清除ORM状态 */
     private clearCurOrmStore;
     /** 设置操作状态 */
     setOperStore<T extends CurOperType>(key: T, value: CurOrmStoreType[T]): this;
+    /** 设置表名称(影响单次的sql语句生成) */
+    tableName(tableName: string): this;
+    /** 设置值填充模式(影响单次的sql语句生成) */
+    fillValue(flag?: boolean): this;
     /**
      * 生成 INSERT 语句
      * @param data 插入的数据
@@ -52,8 +56,6 @@ declare class SqliteOrm {
     select(field?: string): this;
     /** COUNT 查询 */
     count(field: string): this;
-    /** 开启值填充模式 */
-    fillValue(flag?: boolean): this;
     /** 设置 GROUP BY */
     groupBy(field: string): this;
     /** 设置 ORDER BY */
@@ -77,7 +79,7 @@ declare class SqliteOrm {
     /** 批量设置 WHERE AND */
     andArray(key: string, connect: WhereConnectType, value: any[]): this;
     /** 设置 LIMIT */
-    limit(limit: number, offset: number): this;
+    limit(limit: number, offset?: number): this;
     /**
      * 获取原始sql语句
      *

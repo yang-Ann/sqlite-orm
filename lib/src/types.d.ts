@@ -43,7 +43,7 @@ export type CurOrmStoreType = {
     /** 是否有调用 where() */
     isSetWhere?: boolean;
     /** limit 条件 */
-    limit?: [number, number];
+    limit?: [number, number] | [number];
 };
 /** WHERE 类型 */
 export type WhereType = "AND" | "OR";
