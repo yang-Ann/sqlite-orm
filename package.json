@@ -1,6 +1,6 @@
 {
   "name": "@anlib/sqlite-orm",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "types": "lib/src/index.d.ts",
   "description": "一个简单的 sqlite orm",
