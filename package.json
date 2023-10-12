@@ -4,7 +4,7 @@
   "type": "module",
   "types": "lib/src/index.d.ts",
   "description": "一个简单的 sqlite orm",
-  "main": "lib/bundle.cjs.js",
+  "main": "lib/bundle.esm.js",
   "jsnext:main": "lib/bundle.esm.js",
   "module": "lib/bundle.esm.js",
   "browser": "lib/bundle.browser.js",
