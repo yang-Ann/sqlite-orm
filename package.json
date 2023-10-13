@@ -1,8 +1,8 @@
 {
   "name": "@anlib/sqlite-orm",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
-  "types": "lib/src/index.d.ts",
+  "types": "lib/index.d.ts",
   "description": "一个简单的 sqlite orm",
   "main": "lib/bundle.esm.js",
   "jsnext:main": "lib/bundle.esm.js",
