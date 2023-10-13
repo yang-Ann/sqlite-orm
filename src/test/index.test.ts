@@ -151,8 +151,11 @@ test("update", () => {
 
 
 test("setVersion", () => {
-  const sql12 = sqliteOrm.fillValue(false).setVersion(2);
-  expect(sql12).toMatchSnapshot();
+  const sql121 = sqliteOrm.fillValue(false).setVersion(2);
+  expect(sql121).toMatchSnapshot();
+
+  const sql122 = sqliteOrm.fillValue(true).setVersion(2);
+  expect(sql122).toMatchSnapshot();
 });
 
 describe("base methods", () => {

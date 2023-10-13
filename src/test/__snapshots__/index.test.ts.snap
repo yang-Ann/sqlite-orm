@@ -171,6 +171,15 @@ exports[`setVersion 1`] = `
 ]
 `;
 
+exports[`setVersion 2`] = `
+[
+  "PRAGMA user_version = ?",
+  [
+    2,
+  ],
+]
+`;
+
 exports[`tableInfo 1`] = `
 [
   "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",

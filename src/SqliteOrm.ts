@@ -784,10 +784,10 @@ class SqliteOrm {
   /**
    * 设置数据库版本
    */
-  setVersion(version: number) {
-    let ret;
+  setVersion(version: number): SqliteOrmRsultType {
+    let ret: SqliteOrmRsultType;
     if (this.$isFillValue) {
-      ret = [`PRAGMA user_version = ?`, version];
+      ret = [`PRAGMA user_version = ?`, [version]];
     } else {
       ret = [`PRAGMA user_version = ${version}`, []];
     }

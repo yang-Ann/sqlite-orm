@@ -194,7 +194,7 @@ declare class SqliteOrm {
     /**
      * 设置数据库版本
      */
-    setVersion(version: number): (string | number)[] | (string | never[])[];
+    setVersion(version: number): SqliteOrmRsultType;
     /**
      * 获取数据库表信息
      */
