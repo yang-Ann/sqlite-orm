@@ -782,20 +782,6 @@ class SqliteOrm {
   }
 
   /**
-   * 设置数据库版本
-   */
-  setVersion(version: number): SqliteOrmRsultType {
-    let ret: SqliteOrmRsultType;
-    if (this.$isFillValue) {
-      ret = [`PRAGMA user_version = ?`, [version]];
-    } else {
-      ret = [`PRAGMA user_version = ${version}`, []];
-    }
-    this.clearCurOrmStore();
-    return ret;
-  }
-
-  /**
    * 获取数据库表信息
    */
   tableInfo(tableName = this.$tableName) {

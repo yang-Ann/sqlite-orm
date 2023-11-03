@@ -199,10 +199,6 @@ const sql11 = sqliteOrm.update(datas[0]).where("id", "=", 1).getSqlRaw();
 console.log("sql11: ", sql11);
 // sql11:  [ 'UPDATE "my_table" SET name="张三", age="18", gex="男" WHERE id=1', [] ]
 
-const sql12 = sqliteOrm.setVersion(2);
-console.log("sql12: ", sql12);
-// sql12:  [ 'PRAGMA user_version = ?', 2 ]
-
 const sql13 = sqliteOrm.findById(1);
 console.log("sql13: ", sql13);
 // sql13:  [ 'SELECT * FROM "my_table" WHERE id=?', [ 1 ] ]

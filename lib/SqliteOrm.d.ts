@@ -192,10 +192,6 @@ declare class SqliteOrm {
      */
     private $buildUpdateByWhen;
     /**
-     * 设置数据库版本
-     */
-    setVersion(version: number): SqliteOrmRsultType;
-    /**
      * 获取数据库表信息
      */
     tableInfo(tableName?: string): SqliteOrmRsultType;
