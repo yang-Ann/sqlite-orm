@@ -554,12 +554,7 @@ class SqliteOrm {
     };
 
     sql = `${operMap[curOper]} "${this.$tableName}"`;
-
-    const whereSql = this.buildWhere();
-    const groupBySql = this.buildGroupBy();
-    const orderBySql = this.buildOrderBy();
-    const limitSql = this.buildLimit();
-    const otherSql = `${whereSql} ${groupBySql} ${orderBySql} ${limitSql}`;
+    const otherSql = this.getOtherSql();
 
     if (curOper === "delete") {
       sql = `${sql} ${otherSql}`;
@@ -573,14 +568,14 @@ class SqliteOrm {
         if (this.$isFillValue) {
           setSql = fields
             .map((e, i) => {
-              this.curOrmStore.fillValue.push(_value[i]);
+              // 这里要插入到前面, 因为
+              this.curOrmStore.fillValue.unshift(_value[i]);
               return `${e}=?`;
             })
             .join(", ");
         } else {
           setSql = fields.map((e, i) => `${e}="${_value[i]}"`).join(", ");
         }
-
         sql = `${sql} SET ${setSql} ${otherSql}`;
       }
     } else if (curOper === "select" || curOper === "count") {
@@ -596,6 +591,16 @@ class SqliteOrm {
       this.clearCurOrmStore();
       return [sql, []];
     }
+  }
+
+  /** 获取其他的sql */
+  getOtherSql(): string {
+    const whereSql = this.buildWhere();
+    const groupBySql = this.buildGroupBy();
+    const orderBySql = this.buildOrderBy();
+    const limitSql = this.buildLimit();
+    const otherSql = `${whereSql} ${groupBySql} ${orderBySql} ${limitSql}`;
+    return otherSql;
   }
 
   /**

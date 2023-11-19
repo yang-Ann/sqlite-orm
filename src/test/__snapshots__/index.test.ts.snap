@@ -164,22 +164,6 @@ exports[`select 5`] = `
 ]
 `;
 
-exports[`setVersion 1`] = `
-[
-  "PRAGMA user_version = 2",
-  [],
-]
-`;
-
-exports[`setVersion 2`] = `
-[
-  "PRAGMA user_version = ?",
-  [
-    2,
-  ],
-]
-`;
-
 exports[`tableInfo 1`] = `
 [
   "SELECT * FROM \\"sqlite_master\\" WHERE type=? AND name=?",
@@ -194,10 +178,10 @@ exports[`update 1`] = `
 [
   "UPDATE \\"my_table.db\\" SET name=?, age=?, gex=? WHERE id=?",
   [
-    1,
-    "张三",
-    18,
     "男",
+    18,
+    "张三",
+    1,
   ],
 ]
 `;

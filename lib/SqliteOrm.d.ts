@@ -102,6 +102,8 @@ declare class SqliteOrm {
     cloneData(data: any): any;
     /** 生成 sql */
     buildRawSql(): SqliteOrmRsultType;
+    /** 获取其他的sql */
+    getOtherSql(): string;
     /**
      * 新增列
      * @param field 字段名
