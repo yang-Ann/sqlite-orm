@@ -568,7 +568,7 @@ class SqliteOrm {
         if (this.$isFillValue) {
           setSql = fields
             .map((e, i) => {
-              // 这里要插入到前面, 因为
+              // 这里要插入到前面, 因为是先生成其它的sql(可见 `getOtherSql`), 不然会导致填充的值错乱
               this.curOrmStore.fillValue.unshift(_value[i]);
               return `${e}=?`;
             })
