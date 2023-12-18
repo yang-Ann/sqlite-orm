@@ -81,7 +81,7 @@ test("select", () => {
 
 
 test("insert", () => {
-  const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean }>({
+  const sql6 = sqliteOrm.insert<Persion & { isFlag: boolean }>({
     name: "张三",
     age: 18,
     gex: "男",
@@ -92,7 +92,7 @@ test("insert", () => {
 
 
 test("inserts", () => {
-  const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量
+  const sql7 = sqliteOrm.inserts<Persion[]>(datas, 6); // 一个语句最多6个变量
   expect(sql7).toMatchSnapshot();
 });
 

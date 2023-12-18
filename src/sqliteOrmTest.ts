@@ -104,7 +104,7 @@ console.log("sql5: ", sql5);
 //   [ 18, '男', 'name' ]
 // ]
 
-const sql6 = sqliteOrm.inser<Persion>({
+const sql6 = sqliteOrm.insert<Persion>({
   name: "张三",
   age: 18,
   gex: "男"
@@ -116,7 +116,7 @@ console.log("sql6: ", sql6);
 //   [ '张三', 18, '男' ]
 // ]
 
-const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量
+const sql7 = sqliteOrm.inserts<Persion[]>(datas, 6); // 一个语句最多6个变量
 
 console.log("sql7: ", sql7);
 // sql7:  [
