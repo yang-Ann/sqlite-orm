@@ -112,7 +112,7 @@ class SqliteOrm {
   /**
    * 生成 INSERT 语句
    * @param data 插入的数据
-   * @returns `string`
+   * @returns `SqliteOrmRsultType`
    */
   inser<T extends MyObject>(data: T): SqliteOrmRsultType {
     const [sql, parmas] = this.buildInsertValues([data]);
@@ -124,7 +124,7 @@ class SqliteOrm {
    * 批量生成 INSERT 语句
    * @param datas 插入的数据
    * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
-   * @returns `string[]`
+   * @returns `SqliteOrmRsultType[]`
    */
   insers<T extends MyObject[]>(datas: T, maxSize = 999): SqliteOrmRsultType[] {
     // 一次最多可以保存多少个字段的数据
@@ -184,7 +184,7 @@ class SqliteOrm {
     return this;
   }
 
-  // 构建 WHERE 项
+  /** 构建 WHERE 项 */
   private buildWhereItem(key: string, connect: WhereConnectType, value: any, addDataFlag: "PUSH" | "UNSHIFT" = "PUSH") {
     const spec: WhereConnectType[] = ["IN", "IS NOT", "NOT", "like"];
     const _connect = spec.includes(connect) ? ` ${connect} ` : connect;
@@ -310,7 +310,7 @@ class SqliteOrm {
     };
   }
 
-  // 数组构建
+  /** 数组构建 */
   private buildWhereArrayItem(key: string, connect: WhereConnectType, value: any[], whereType: WhereType) {
     if (value.length) {
       this.curOrmStore.isSetWhere = true;
@@ -379,7 +379,7 @@ class SqliteOrm {
    *
    * 返回值是一个数组 @return `[string, any[]]`
    * - 索引为0是一个 sql 语句, 当开启了`isFillValue`里的值是使用`?`代替
-   * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应的值
+   * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应?的值
    */
   getSqlRaw() {
     return this.buildRawSql();
@@ -541,7 +541,7 @@ class SqliteOrm {
   buildRawSql(): SqliteOrmRsultType {
     const curOper = this.curOrmStore.curOper;
     if (!curOper) {
-      return ["", []];
+      throw new Error(`没有指定操作类型, 至少需要调用delete, update, select, count 其中一个方法`);
     }
 
     let sql = "";
@@ -786,9 +786,7 @@ class SqliteOrm {
     }
   }
 
-  /**
-   * 获取数据库表信息
-   */
+  /** 获取数据库表信息 */
   tableInfo(tableName = this.$tableName) {
     const temp = new SqliteOrm({ tableName: "sqlite_master", isFillValue: this.opt.isFillValue });
     return temp.select().where("type", "=", "table").and("name", "=", tableName).getSqlRaw();
@@ -818,16 +816,13 @@ class SqliteOrm {
   deleteTable(tableName = this.$tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     if (this.$isFillValue) {
-      return [`DROP TABLE IF EXISTS "${tableName}"`, []];
-      // return [`DROP TABLE IF EXISTS ?`, [tableName]];
+      return [`DROP TABLE IF EXISTS ?`, [tableName]];
     } else {
       return [`DROP TABLE IF EXISTS "${tableName}"`, []];
     }
   }
 
-  /**
-   * 构建 CREATE TABLE 语句
-   */
+  /** 构建 CREATE TABLE 语句 */
   public buildCreate(option: TableFieldsOption[], tableName = this.$tableName): SqliteOrmRsultType {
     this.clearCurOrmStore();
     const list: string[] = [];

@@ -38,14 +38,14 @@ declare class SqliteOrm {
     /**
      * 生成 INSERT 语句
      * @param data 插入的数据
-     * @returns `string`
+     * @returns `SqliteOrmRsultType`
      */
     inser<T extends MyObject>(data: T): SqliteOrmRsultType;
     /**
      * 批量生成 INSERT 语句
      * @param datas 插入的数据
      * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
-     * @returns `string[]`
+     * @returns `SqliteOrmRsultType[]`
      */
     insers<T extends MyObject[]>(datas: T, maxSize?: number): SqliteOrmRsultType[];
     /** DELETE 操作 */
@@ -60,6 +60,7 @@ declare class SqliteOrm {
     groupBy(field: string): this;
     /** 设置 ORDER BY */
     orderBy(order: OrderByType, field: string): this;
+    /** 构建 WHERE 项 */
     private buildWhereItem;
     /** 设置 WHERE */
     where(key: string, connect: WhereConnectType, value: any): this;
@@ -71,6 +72,7 @@ declare class SqliteOrm {
     or(key: string, connect: WhereConnectType, value: any): this;
     /** 获取 WHERE 普通的连接符 */
     private getConnectItem;
+    /** 数组构建 */
     private buildWhereArrayItem;
     /** 批量设置 WHERE */
     whereArray(key: string, connect: WhereConnectType, value: any[], whereType: WhereType): this;
@@ -85,7 +87,7 @@ declare class SqliteOrm {
      *
      * 返回值是一个数组 @return `[string, any[]]`
      * - 索引为0是一个 sql 语句, 当开启了`isFillValue`里的值是使用`?`代替
-     * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应的值
+     * - 索引为1是一个数组, 当开启了`isFillValue`的时候就是对应?的值
      */
     getSqlRaw(): SqliteOrmRsultType;
     /** 生成 WHERE */
@@ -193,9 +195,7 @@ declare class SqliteOrm {
      * ```
      */
     private $buildUpdateByWhen;
-    /**
-     * 获取数据库表信息
-     */
+    /** 获取数据库表信息 */
     tableInfo(tableName?: string): SqliteOrmRsultType;
     /** 根据 id 查询指定数据 */
     findById(id: string | number, field?: string): SqliteOrmRsultType;
@@ -207,9 +207,7 @@ declare class SqliteOrm {
     deleteAll(tableName?: string): SqliteOrmRsultType;
     /** 删除表 */
     deleteTable(tableName?: string): SqliteOrmRsultType;
-    /**
-     * 构建 CREATE TABLE 语句
-     */
+    /** 构建 CREATE TABLE 语句 */
     buildCreate(option: TableFieldsOption[], tableName?: string): SqliteOrmRsultType;
 }
 export default SqliteOrm;
