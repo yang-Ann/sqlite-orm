@@ -60,7 +60,7 @@ test("select", () => {
   expect(sql2).toMatchSnapshot();
 
 
-  const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello"]).or("age", "=", 18).getSqlRaw();
+  const sql3 = sqliteOrm.select().where("name", "IN", [1, 2, "hello", () => "word"]).or("age", "=", () => 18).getSqlRaw();
   expect(sql3).toMatchSnapshot();
 
 
@@ -81,11 +81,12 @@ test("select", () => {
 
 
 test("insert", () => {
-  const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean }>({
+  const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean, testFn: () => any }>({
     name: "张三",
     age: 18,
     gex: "男",
-    isFlag: true // -> true = 1, false = 0
+    isFlag: true,
+    testFn: () => 'hello',
   });
   expect(sql6).toMatchSnapshot();
 });
@@ -173,7 +174,7 @@ describe("base methods", () => {
   });
 
   test("deleteTable", () => {
-    const sql17 = sqliteOrm.deleteTable("hello.db");
+    const sql17 = sqliteOrm.fillValue(false).deleteTable("hello.db");
     expect(sql17).toMatchSnapshot();
   });
   

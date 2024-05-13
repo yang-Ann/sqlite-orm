@@ -57,12 +57,13 @@ exports[`create sql > "CREATE TABLE IF NOT EXISTS \\"test.db\\" (id INTEGER PRIM
 
 exports[`insert 1`] = `
 [
-  "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex, isFlag) VALUES (?, ?, ?, ?)",
+  "INSERT or REPLACE INTO \\"my_table.db\\" (name, age, gex, isFlag, testFn) VALUES (?, ?, ?, ?, ?)",
   [
     "张三",
     18,
     "男",
     true,
+    "hello",
   ],
 ]
 `;
@@ -126,11 +127,12 @@ exports[`select 2`] = `
 
 exports[`select 3`] = `
 [
-  "SELECT * FROM \\"my_table.db\\" WHERE name IN (?, ?, ?) OR age=?",
+  "SELECT * FROM \\"my_table.db\\" WHERE name IN (?, ?, ?, ?) OR age=?",
   [
     1,
     2,
     "hello",
+    "word",
     18,
   ],
 ]

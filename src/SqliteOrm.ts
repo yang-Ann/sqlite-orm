@@ -185,19 +185,25 @@ class SqliteOrm {
   }
 
   /** 构建 WHERE 项 */
-  private buildWhereItem(key: string, connect: WhereConnectType, value: any, addDataFlag: "PUSH" | "UNSHIFT" = "PUSH") {
+  private buildWhereItem(
+    key: string,
+    connect: WhereConnectType,
+    value: WhereItem["value"],
+    addDataFlag: "PUSH" | "UNSHIFT" = "PUSH"
+  ) {
     const spec: WhereConnectType[] = ["IN", "IS NOT", "NOT", "like"];
     const _connect = spec.includes(connect) ? ` ${connect} ` : connect;
 
-    let _value: any = value;
+    let _value: WhereItem["value"] = value;
     if (value) {
-      if (typeof value === "string") {
+      if (typeof value === "string" || typeof value === "function") {
         if (this.$isFillValue) {
           _value = "?";
+          const _fnv = typeof value === "function" ? value() : value;
           if (addDataFlag == "PUSH") {
-            this.curOrmStore.fillValue.push(value);
+            this.curOrmStore.fillValue.push(_fnv);
           } else {
-            this.curOrmStore.fillValue.unshift(value);
+            this.curOrmStore.fillValue.unshift(_fnv);
           }
         } else {
           _value = `"${value}"`;
@@ -206,14 +212,17 @@ class SqliteOrm {
         const v = value
           .map(e => {
             if (this.$isFillValue) {
+              const _fnv = typeof e === "function" ? e() : e;
               if (addDataFlag == "PUSH") {
-                this.curOrmStore.fillValue.push(e);
+                this.curOrmStore.fillValue.push(_fnv);
               } else {
-                this.curOrmStore.fillValue.unshift(e);
+                this.curOrmStore.fillValue.unshift(_fnv);
               }
               return "?";
             } else if (typeof e === "string") {
               return `"${e}"`;
+            } else if (typeof e === "function") {
+              return e();
             } else {
               return e;
             }
@@ -234,7 +243,7 @@ class SqliteOrm {
         }
       }
     } else {
-      // 如果是布尔值, 则 true = 1, false = 0
+      // TODO 如果是布尔值, 则 true = 1, false = 0
       // if (typeof value === "boolean") {
       //   _value = value ? 1 : 0;
       // }
@@ -261,7 +270,7 @@ class SqliteOrm {
   }
 
   /** 设置 AND 和 OR */
-  private setWhere(key: string, connect: WhereConnectType, value: any, whereType: WhereType) {
+  private setWhere(key: string, connect: WhereConnectType, value: WhereItem["value"], whereType: WhereType) {
     const item: WhereItem = {
       key,
       connect,
@@ -404,6 +413,7 @@ class SqliteOrm {
               return this.buildWhereItem(e.key, e.connect, e.value);
             } else {
               console.warn("连接符异常: ", e);
+              return "";
             }
             // 普通的连接符
           } else if (e.type === "CONNECT") {
@@ -515,8 +525,12 @@ class SqliteOrm {
     });
     const values = allData
       .map(item => {
-        const v = item.join(", ");
-        return `(${v})`;
+        const _value = item
+          .map(e => {
+            return typeof e === "function" ? e() : e;
+          })
+          .join(", ");
+        return `(${_value})`;
       })
       .join(", ");
 
@@ -525,7 +539,14 @@ class SqliteOrm {
     // console.log("fillValue: ", this.curOrmStore.fillValue);
 
     if (this.$isFillValue) {
-      const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
+      const fillValue = this.cloneData(
+        this.curOrmStore.fillValue
+          .map(e => {
+            const _value = typeof e === "function" ? e() : e;
+            return _value;
+          })
+          .flat()
+      );
       return [`${fieldSql} ${values}`, fillValue];
     } else {
       return [`${fieldSql} ${values}`, []];
@@ -562,7 +583,7 @@ class SqliteOrm {
       const updateData = this.curOrmStore.update;
       if (updateData) {
         const fields = Object.keys(updateData);
-        const _value = Object.values(updateData);
+        const _value = Object.values(updateData).map(e => (typeof e === "function" ? e() : e));
 
         let setSql;
         if (this.$isFillValue) {
@@ -574,7 +595,7 @@ class SqliteOrm {
             })
             .join(", ");
         } else {
-          setSql = fields.map((e, i) => `${e}="${_value[i]}"`).join(", ");
+          setSql = fields.map((e, i) => `${e}=${_value[i]}`).join(", ");
         }
         sql = `${sql} SET ${setSql} ${otherSql}`;
       }
@@ -583,14 +604,17 @@ class SqliteOrm {
     }
 
     sql = sql.replace(/\s+/g, " ").trim();
+    let ret: SqliteOrmRsultType;
     if (this.$isFillValue) {
       const fillValue = this.cloneData(this.curOrmStore.fillValue.flat());
       this.clearCurOrmStore();
-      return [sql, fillValue];
+      ret = [sql, fillValue];
     } else {
       this.clearCurOrmStore();
-      return [sql, []];
+      ret = [sql, []];
     }
+
+    return ret;
   }
 
   /** 获取其他的sql */
@@ -794,37 +818,38 @@ class SqliteOrm {
 
   /** 根据 id 查询指定数据 */
   findById(id: string | number, field = "id") {
-    return this.clearCurOrmStore().select().where(field, "=", id).getSqlRaw();
+    return this.select().where(field, "=", id).getSqlRaw();
   }
 
   /** 查询所有的数据 */
   selectAll(tableName = this.$tableName) {
-    return this.clearCurOrmStore().tableName(tableName).select().getSqlRaw();
+    return this.tableName(tableName).select().getSqlRaw();
   }
 
   /** 根据 id 删除指定的数据 */
   deleteById(id: string | number, field = "id") {
-    return this.clearCurOrmStore().delete().where(field, "=", id).getSqlRaw();
+    return this.delete().where(field, "=", id).getSqlRaw();
   }
 
   /** 删除所有的数据 */
   deleteAll(tableName = this.$tableName) {
-    return this.clearCurOrmStore().tableName(tableName).delete().where("1", "=", 1).getSqlRaw();
+    return this.tableName(tableName).delete().where("1", "=", 1).getSqlRaw();
   }
 
   /** 删除表 */
   deleteTable(tableName = this.$tableName): SqliteOrmRsultType {
-    this.clearCurOrmStore();
+    let ret: SqliteOrmRsultType;
     if (this.$isFillValue) {
-      return [`DROP TABLE IF EXISTS ?`, [tableName]];
+      ret = [`DROP TABLE IF EXISTS ?`, [tableName]];
     } else {
-      return [`DROP TABLE IF EXISTS "${tableName}"`, []];
+      ret = [`DROP TABLE IF EXISTS "${tableName}"`, []];
     }
+    this.clearCurOrmStore();
+    return ret;
   }
 
   /** 构建 CREATE TABLE 语句 */
   public buildCreate(option: TableFieldsOption[], tableName = this.$tableName): SqliteOrmRsultType {
-    this.clearCurOrmStore();
     const list: string[] = [];
 
     option.forEach(e => {
@@ -834,11 +859,14 @@ class SqliteOrm {
     });
 
     const sql = `CREATE TABLE IF NOT EXISTS "${tableName}" (${list.join(", ")});`;
+    let ret: SqliteOrmRsultType;
     if (this.$isFillValue) {
-      return [sql, []];
+      ret = [sql, []];
     } else {
-      return [sql, []];
+      ret = [sql, []];
     }
+    this.clearCurOrmStore();
+    return ret;
   }
 
   // TODO

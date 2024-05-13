@@ -77,7 +77,7 @@ export type WhereItem = {
   /** 连接符 */
   connect: WhereConnectType | "";
   /** 值 */
-  value: any;
+  value: string | number | (() => string | number);
 };
 
 /** 构建 update when 配置 */
