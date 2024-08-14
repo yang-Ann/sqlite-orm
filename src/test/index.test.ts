@@ -93,7 +93,7 @@ test("insert", () => {
 
 
 test("inserts", () => {
-  const sql7 = sqliteOrm.insers<Persion[]>(datas, 6); // 一个语句最多6个变量
+  const sql7 = sqliteOrm.inserts<Persion[]>(datas, 6); // 一个语句最多6个变量
   expect(sql7).toMatchSnapshot();
 });
 

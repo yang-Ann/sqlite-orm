@@ -40,14 +40,14 @@ declare class SqliteOrm {
      * @param data 插入的数据
      * @returns `SqliteOrmRsultType`
      */
-    inser<T extends MyObject>(data: T): SqliteOrmRsultType;
+    insert<T extends MyObject>(data: T): SqliteOrmRsultType;
     /**
      * 批量生成 INSERT 语句
      * @param datas 插入的数据
      * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
      * @returns `SqliteOrmRsultType[]`
      */
-    insers<T extends MyObject[]>(datas: T, maxSize?: number): SqliteOrmRsultType[];
+    inserts<T extends MyObject[]>(datas: T, maxSize?: number): SqliteOrmRsultType[];
     /** DELETE 操作 */
     delete(): this;
     /** UPDATE 操作 */

@@ -114,7 +114,7 @@ class SqliteOrm {
    * @param data 插入的数据
    * @returns `SqliteOrmRsultType`
    */
-  inser<T extends MyObject>(data: T): SqliteOrmRsultType {
+  insert<T extends MyObject>(data: T): SqliteOrmRsultType {
     const [sql, parmas] = this.buildInsertValues([data]);
     this.clearCurOrmStore();
     return [`INSERT or REPLACE INTO "${this.$tableName}" ${sql}`, parmas];
@@ -126,7 +126,7 @@ class SqliteOrm {
    * @param maxSize 因为 sqlite 存在限制, 一次sql最多只能插入999个变量的值, 这里参数进行控制
    * @returns `SqliteOrmRsultType[]`
    */
-  insers<T extends MyObject[]>(datas: T, maxSize = 999): SqliteOrmRsultType[] {
+  inserts<T extends MyObject[]>(datas: T, maxSize = 999): SqliteOrmRsultType[] {
     // 一次最多可以保存多少个字段的数据
     // const MAX_SIZE = 999;
     if (datas.length === 0) {
