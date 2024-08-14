@@ -120,7 +120,7 @@ exports[`select 1`] = `
 
 exports[`select 2`] = `
 [
-  "SELECT name,age FROM \\"test.db\\" WHERE name>\\"张三\\" OR gex=\\"男\\" AND ( ids IN 1 AND ids IN 2 AND ids IN 3 ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15",
+  "SELECT name,age FROM \\"test.db\\" WHERE name>\\"张三\\" OR gex=\\"男\\" AND ( ids IN (1, 2, 3) ) AND uuids IN (1, 2, 3) GROUP BY name ORDER BY DESC name,age LIMIT 10,15",
   [],
 ]
 `;

@@ -112,7 +112,7 @@ console.log("sql5: ", sql5);
 //   [ 18, '男', 'name' ]
 // ]
 
-const sql6 = sqliteOrm.inser<Persion>({
+const sql6 = sqliteOrm.insert<Persion>({
   name: "张三",
   age: 18,
   gex: "男"

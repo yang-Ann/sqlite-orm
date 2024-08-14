@@ -81,7 +81,7 @@ test("select", () => {
 
 
 test("insert", () => {
-  const sql6 = sqliteOrm.inser<Persion & { isFlag: boolean, testFn: () => any }>({
+  const sql6 = sqliteOrm.insert<Persion & { isFlag: boolean, testFn: () => any }>({
     name: "张三",
     age: 18,
     gex: "男",
