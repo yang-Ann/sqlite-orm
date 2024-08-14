@@ -12,8 +12,11 @@
   <script type="module">
     const SqliteOrm = window["@anlib/sqlite-orm"].default;
     const sqliteOrm = new SqliteOrm({ tableName: "my_table.db", isFillValue: true });
-    const [sql, value] = sqliteOrm.update({ age: 18, name: "hello" }).fillValue(true).where("id", "=", 1).getSqlRaw();
-    console.log("result: ", sql, value);
+    let result = sqliteOrm.update({ age: 18, name: "hello" }).fillValue(true).where("id", "=", 1).getSqlRaw();
+    console.log("update result: ", result);
+
+    result = sqliteOrm.orArray('sex', "IN", ['1', 2, 3]).and("hello", '=', "eerr").or("word", '>', 4).whereArray("name", 'IN', [7, 8, 9], "AND").fillValue(false).getSqlRaw();
+    console.log("where result: ", result);
   </script>
 </body>
 

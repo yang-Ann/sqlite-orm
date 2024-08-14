@@ -331,13 +331,19 @@ class SqliteOrm {
       this.curOrmStore.where = [this.getConnectItem("(")];
     }
 
-    value.forEach(e => {
+    const setWhere = (val: any) => {
       if (whereType === "AND") {
-        this.and(key, connect, e);
+        this.and(key, connect, val);
       } else if (whereType === "OR") {
-        this.or(key, connect, e);
+        this.or(key, connect, val);
       }
-    });
+    }
+
+    if (connect === 'IN' && Array.isArray(value)) {
+      setWhere(value);
+    } else {
+      value.forEach(e => setWhere(e));
+    }
 
     this.curOrmStore.where.push(this.getConnectItem(")"));
     return this;
@@ -369,6 +375,46 @@ class SqliteOrm {
       this.buildWhereArrayItem(key, connect, value, "AND");
     } else {
       console.warn("空数组 WHERE 条件");
+    }
+    return this;
+  }
+
+  /** 对象构建 */
+  private buildWhereObjectItem(connect: WhereConnectType, value: Record<string, any>, whereType: WhereType) {
+    for (const key in value) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const val = value[key];
+        this.buildWhereArrayItem(key, connect, [val], whereType);
+      }
+    }
+  }
+
+  /** 批量设置 WHERE */
+  whereObject(connect: WhereConnectType, value: Record<string, any>, whereType: WhereType) {
+    if (Object.keys(value).length) {
+      this.buildWhereObjectItem(connect, value, whereType);
+    } else {
+      console.warn("空对象 WHERE 条件");
+    }
+    return this;
+  }
+
+  /** 批量设置 WHERE OR */
+  orObject(connect: WhereConnectType, value: Record<string, any>) {
+    if (Object.keys(value).length) {
+      this.buildWhereObjectItem(connect, value, "OR");
+    } else {
+      console.warn("空对象 WHERE 条件");
+    }
+    return this;
+  }
+
+  /** 批量设置 WHERE AND */
+  andObject(connect: WhereConnectType, value: any[]) {
+    if (Object.keys(value).length) {
+      this.buildWhereObjectItem(connect, value, "AND");
+    } else {
+      console.warn("空对象 WHERE 条件");
     }
     return this;
   }
@@ -523,6 +569,7 @@ class SqliteOrm {
       });
       allData.push(val);
     });
+
     const values = allData
       .map(item => {
         const _value = item
@@ -533,10 +580,6 @@ class SqliteOrm {
         return `(${_value})`;
       })
       .join(", ");
-
-    // DEBUG
-    // console.log("values: ", values);
-    // console.log("fillValue: ", this.curOrmStore.fillValue);
 
     if (this.$isFillValue) {
       const fillValue = this.cloneData(
@@ -561,9 +604,8 @@ class SqliteOrm {
   /** 生成 sql */
   buildRawSql(): SqliteOrmRsultType {
     const curOper = this.curOrmStore.curOper;
-    if (!curOper) {
-      throw new Error(`没有指定操作类型, 至少需要调用delete, update, select, count 其中一个方法`);
-    }
+
+    // if (!curOper) throw new Error(`没有指定操作类型, 至少需要调用delete, update, select, count 其中一个方法`);
 
     let sql = "";
 
@@ -574,7 +616,7 @@ class SqliteOrm {
       count: `SELECT count(${this.curOrmStore.count}) FROM`
     };
 
-    sql = `${operMap[curOper]} "${this.$tableName}"`;
+    if (curOper) sql = `${operMap[curOper]} "${this.$tableName}"`;
     const otherSql = this.getOtherSql();
 
     if (curOper === "delete") {
@@ -601,6 +643,8 @@ class SqliteOrm {
       }
     } else if (curOper === "select" || curOper === "count") {
       sql = `${sql} ${otherSql}`;
+    } else {
+      sql = `${otherSql}`;
     }
 
     sql = sql.replace(/\s+/g, " ").trim();
